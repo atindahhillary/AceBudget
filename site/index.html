@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AceBudget: the budgeting app that never asks for your bank password</title>
+  <meta name="description" content="AceBudget is a free, local-first budgeting app for real households: cash and mobile money, lumpy income, debt payoff simulation, subscription leak detection, and a runway metric. All offline, all private, no account required." />
+  <link rel="canonical" href="https://example.com/site/index.html" />
+  <!-- Replace https://example.com/ with the real deployed domain once known. -->
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="AceBudget: private, local-first household budgeting" />
+  <meta property="og:description" content="Every other budgeting app asks for your bank password. This one never asks for your name. Free, offline-capable, no account." />
+  <meta property="og:url" content="https://example.com/site/index.html" />
+  <meta property="og:image" content="assets/img/og-cover.png" />
+  <!-- assets/img/og-cover.png is a placeholder path: replace with a real 1200x630 cover image before sharing. -->
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="AceBudget: private, local-first household budgeting" />
+  <meta name="twitter:description" content="Every other budgeting app asks for your bank password. This one never asks for your name." />
+  <meta name="twitter:image" content="assets/img/og-cover.png" />
+
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230a7d5b'/%3E%3Crect x='16' y='34' width='8' height='16' rx='2' fill='%23ffffff'/%3E%3Crect x='28' y='24' width='8' height='26' rx='2' fill='%23ffffff'/%3E%3Crect x='40' y='14' width='8' height='36' rx='2' fill='%23ffffff'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="../assets/css/base.css" />
+  <link rel="stylesheet" href="../assets/css/site.css" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "AceBudget",
+    "applicationCategory": "FinanceApplication",
+    "operatingSystem": "Any (web browser)",
+    "description": "A free, local-first household budgeting app with a runway metric, debt payoff simulator, subscription leak detection, and support for cash, mobile money, and irregular income.",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Does AceBudget require an account or bank login?",
+        "acceptedAnswer": { "@type": "Answer", "text": "No. AceBudget never asks for a bank password or any credential. There is no account, no server, and no sign-up. All data stays in your browser's local storage on your own device." }
+      },
+      {
+        "@type": "Question",
+        "name": "Does AceBudget work with cash and mobile money, not just bank cards?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes. Cash, mobile money, bank transfer, and card are all first-class payment methods on every transaction. AceBudget does not assume a card-rail economy." }
+      },
+      {
+        "@type": "Question",
+        "name": "What is Runway Days?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Runway Days is how many days a household could sustain its essential spending from liquid savings if income stopped today. It is AceBudget's north-star metric." }
+      },
+      {
+        "@type": "Question",
+        "name": "Does AceBudget work offline?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes. AceBudget is a zero-dependency, zero-build web app with an offline-capable service worker, so it keeps working without a connection once loaded." }
+      },
+      {
+        "@type": "Question",
+        "name": "Is AceBudget free?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes, AceBudget is free with no subscription tier and no paywalled features." }
+      },
+      {
+        "@type": "Question",
+        "name": "Is AceBudget a licensed financial advisor?",
+        "acceptedAnswer": { "@type": "Answer", "text": "No. AceBudget is a planning and record-keeping tool, not a licensed financial adviser, and it does not provide personalised investment advice." }
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="wrap">
+      <a class="site-logo" href="#main"><span aria-hidden="true">🌱</span> AceBudget</a>
+      <a class="btn btn-primary btn-sm" href="../index.html">Open AceBudget</a>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero">
+      <div class="wrap">
+        <h1>Every other budgeting app asks for your bank password. This one never asks for your name.</h1>
+        <p class="lede">AceBudget is a free, local-first budgeting app built for how households actually earn and spend: cash, mobile money, and lumpy income included. Nothing you enter ever leaves this device.</p>
+        <div class="hero-ctas">
+          <a class="btn btn-primary btn-lg" href="../index.html">Open AceBudget: free, no signup</a>
+        </div>
+        <p class="hero-note">No account. No credit card. No data collection. Works offline once loaded.</p>
+      </div>
+    </section>
+
+    <section id="benefits">
+      <div class="wrap">
+        <h2>Built around what budgeting tools usually get wrong</h2>
+        <p class="section-lede">Each of these maps to a specific gap in existing tools: see the full research in the link below.</p>
+        <div class="benefit-grid">
+          <article class="card benefit-card">
+            <div class="benefit-icon" aria-hidden="true">🔒</div>
+            <h3>Private, local-first</h3>
+            <p class="soft">No account, no server, no telemetry. Every number stays in this browser's storage on your device.</p>
+          </article>
+          <article class="card benefit-card">
+            <div class="benefit-icon" aria-hidden="true">📱</div>
+            <h3>Cash and mobile money, first-class</h3>
+            <p class="soft">Cash, mobile money, bank transfer, and card are equal citizens on every transaction, not an afterthought behind a bank-sync paywall.</p>
+          </article>
+          <article class="card benefit-card">
+            <div class="benefit-icon" aria-hidden="true">🧭</div>
+            <h3>Runway Days, the north-star metric</h3>
+            <p class="soft">One honest number: how many days your household could survive on liquid savings at essential burn if income stopped today.</p>
+          </article>
+          <article class="card benefit-card">
+            <div class="benefit-icon" aria-hidden="true">💳</div>
+            <h3>Debt payoff simulator</h3>
+            <p class="soft">Avalanche vs snowball, simulated month by month, with an honest interest-saved comparison, not just a list of balances.</p>
+          </article>
+          <article class="card benefit-card">
+            <div class="benefit-icon" aria-hidden="true">🔁</div>
+            <h3>Subscription leak radar</h3>
+            <p class="soft">Finds dormant renewals and quantifies exactly what they're costing per year, before the next annual charge lands.</p>
+          </article>
+          <article class="card benefit-card">
+            <div class="benefit-icon" aria-hidden="true">📶</div>
+            <h3>Works offline</h3>
+            <p class="soft">Zero dependencies, zero build step, and a service worker that keeps the app usable without a connection.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="compare">
+      <div class="wrap">
+        <h2>How it compares</h2>
+        <p class="section-lede">An honest look: no tool wins on every axis, and AceBudget doesn't try to pretend otherwise.</p>
+        <div class="compare-wrap">
+          <table class="compare">
+            <thead>
+              <tr><th>Tool</th><th>Cost</th><th>Bank login required</th><th>Works offline</th><th>Does the maths for you</th><th>Cash / mobile money native</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>AceBudget</td>
+                <td class="yes">Free</td>
+                <td class="no">Never</td>
+                <td class="yes">Yes</td>
+                <td class="yes">Yes</td>
+                <td class="yes">Yes</td>
+              </tr>
+              <tr>
+                <td>Spreadsheet / Docs template</td>
+                <td class="yes">Free</td>
+                <td class="no">No</td>
+                <td>Depends on the tool</td>
+                <td class="no">No, manual formulas only</td>
+                <td>Yes, but tracked manually</td>
+              </tr>
+              <tr>
+                <td>Paid subscription app</td>
+                <td class="no">Monthly fee</td>
+                <td>Sometimes</td>
+                <td>Usually not</td>
+                <td class="yes">Often, behind a paywall</td>
+                <td>Rarely a focus</td>
+              </tr>
+              <tr>
+                <td>Bank-sync aggregator</td>
+                <td>Often free with data as the cost</td>
+                <td class="no">Yes, by design</td>
+                <td class="no">No</td>
+                <td class="yes">Yes</td>
+                <td class="no">Excludes cash / informal income</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="faq">
+      <div class="wrap">
+        <h2>Frequently asked questions</h2>
+        <div class="faq-list">
+          <details>
+            <summary>Does AceBudget require an account or bank login?</summary>
+            <p>No. AceBudget never asks for a bank password or any credential. There is no account, no server, and no sign-up. All data stays in your browser's local storage on your own device.</p>
+          </details>
+          <details>
+            <summary>Does AceBudget work with cash and mobile money, not just bank cards?</summary>
+            <p>Yes. Cash, mobile money, bank transfer, and card are all first-class payment methods on every transaction. AceBudget does not assume a card-rail economy.</p>
+          </details>
+          <details>
+            <summary>What is Runway Days?</summary>
+            <p>Runway Days is how many days a household could sustain its essential spending from liquid savings if income stopped today. It is AceBudget's north-star metric.</p>
+          </details>
+          <details>
+            <summary>Does AceBudget work offline?</summary>
+            <p>Yes. AceBudget is a zero-dependency, zero-build web app with an offline-capable service worker, so it keeps working without a connection once loaded.</p>
+          </details>
+          <details>
+            <summary>Is AceBudget free?</summary>
+            <p>Yes, AceBudget is free with no subscription tier and no paywalled features.</p>
+          </details>
+          <details>
+            <summary>Is AceBudget a licensed financial advisor?</summary>
+            <p>No. AceBudget is a planning and record-keeping tool, not a licensed financial adviser, and it does not provide personalised investment advice.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <section class="cta-band">
+      <div class="wrap">
+        <h2>Open your budget in the next minute</h2>
+        <p>No signup form. No trial that expires. Just a private ledger you control.</p>
+        <a class="btn btn-primary btn-lg" href="../index.html">Open AceBudget: free, no signup</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <span>&copy; 2026 AceBudget. A planning and record-keeping tool, not licensed financial advice.</span>
+      <a href="../docs/GAP-ANALYSIS.md">Read the research behind AceBudget</a>
+    </div>
+  </footer>
+</body>
+</html>

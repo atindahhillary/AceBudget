@@ -1,0 +1,50 @@
+/* ==========================================================================
+   AceBudget: marketing site layout.
+   Loaded after base.css. Reuses its tokens/components only.
+   ========================================================================== */
+
+.site-header {
+  position: sticky; top: 0; z-index: 20;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--line);
+}
+.site-header .wrap { display: flex; align-items: center; justify-content: space-between; padding-block: var(--sp-3); }
+.site-logo { display: flex; align-items: center; gap: var(--sp-2); font-weight: 800; font-size: var(--fs-md); color: var(--ink); text-decoration: none; }
+
+.hero { padding-block: var(--sp-8) var(--sp-7); }
+.hero .wrap { max-width: 820px; text-align: center; }
+.hero h1 { margin-bottom: var(--sp-4); }
+.hero .lede { font-size: var(--fs-lg); color: var(--text-soft); margin-bottom: var(--sp-6); }
+.hero-ctas { display: flex; gap: var(--sp-3); justify-content: center; flex-wrap: wrap; margin-bottom: var(--sp-4); }
+.hero-note { font-size: var(--fs-sm); color: var(--text-mute); }
+
+section { padding-block: var(--sp-7); }
+section > .wrap > h2 { text-align: center; margin-bottom: var(--sp-2); }
+section > .wrap > .section-lede { text-align: center; color: var(--text-soft); max-width: 640px; margin: 0 auto var(--sp-6); }
+
+.benefit-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--sp-4); }
+.benefit-card { display: flex; flex-direction: column; gap: var(--sp-2); }
+.benefit-icon { font-size: 1.6rem; }
+
+.compare-wrap { overflow-x: auto; }
+table.compare { width: 100%; border-collapse: collapse; min-width: 640px; }
+table.compare th, table.compare td { padding: 12px 16px; border-bottom: 1px solid var(--line-soft); text-align: left; }
+table.compare thead th { background: var(--surface-2); font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: .04em; color: var(--text-mute); }
+table.compare td.yes { color: var(--ok); font-weight: 700; }
+table.compare td.no { color: var(--text-mute); }
+table.compare tbody tr:first-child td { font-weight: 700; }
+
+.faq-list { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: var(--sp-3); }
+.faq-list details { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); padding: var(--sp-4) var(--sp-5); }
+.faq-list summary { cursor: pointer; font-weight: 650; }
+.faq-list p { margin-top: var(--sp-3); color: var(--text-soft); }
+
+.cta-band { background: var(--brand-600); color: #fff; text-align: center; }
+.cta-band h2 { color: #fff; }
+.cta-band p { color: rgba(255,255,255,.85); margin-bottom: var(--sp-5); }
+.cta-band .btn-primary { background: #fff; color: var(--brand-700); box-shadow: none; }
+.cta-band .btn-primary:hover { background: var(--brand-50); color: var(--brand-800); }
+
+.site-footer { border-top: 1px solid var(--line); padding-block: var(--sp-6); color: var(--text-mute); font-size: var(--fs-sm); }
+.site-footer .wrap { display: flex; flex-wrap: wrap; gap: var(--sp-4); justify-content: space-between; align-items: center; }

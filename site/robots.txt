@@ -1,0 +1,6 @@
+# AceBudget marketing site
+# Replace https://example.com/ with the real domain after deploy.
+User-agent: *
+Allow: /
+
+Sitemap: https://example.com/site/sitemap.xml
