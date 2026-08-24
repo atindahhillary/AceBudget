@@ -146,6 +146,16 @@
 
 /* --- forms --- */
 .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: var(--sp-3); }
+/* Labels vary in length ("Target" vs "Planned monthly contribution") and wrap
+   to different line counts. Reserving a fixed two-line height, with the label
+   text bottom-aligned inside it, keeps every input in the row on the same
+   line regardless of how its own label wraps. */
+.form-row .field > label {
+  min-height: calc(var(--fs-sm) * 1.4 * 2);
+  line-height: 1.4;
+  display: flex;
+  align-items: flex-end;
+}
 .month-nav { justify-content: flex-end; }
 
 /* --- progress bars (used by ui/render.js barRow) --- */
