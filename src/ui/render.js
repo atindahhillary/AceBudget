@@ -240,7 +240,7 @@ export function runwayGauge(container, { days = 0, band = 'thin', scaleMax = 270
   numberEl.textContent = '0';
   const captionEl = document.createElement('div');
   captionEl.className = 'gauge-caption muted fs-xs';
-  captionEl.textContent = days === 1 ? 'day of essential cover' : 'days of essential cover';
+  captionEl.textContent = days === 1 ? 'day of savings left' : 'days of savings left';
   center.append(numberEl, captionEl);
 
   container.append(svg, center);

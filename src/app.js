@@ -118,6 +118,11 @@ function runwayPillClass(band) {
   return 'pill-bad';
 }
 
+/** Plain-language pill text: every band word is already simple except "exposed". */
+function bandWord(band) {
+  return band === 'exposed' ? 'no safety net' : band;
+}
+
 // --- onboarding --------------------------------------------------------------
 
 function buildOnboarding(state) {
@@ -233,13 +238,14 @@ function renderDashboard(container, state, snap) {
   const runwayCard = el('div', { class: 'card rise runway-card' }, [
     el('div', { class: 'row-between' }, [
       el('h2', {}, 'Runway'),
-      el('span', { class: `pill ${runwayPillClass(snap.runway.band)}` }, snap.runway.band),
+      el('span', { class: `pill ${runwayPillClass(snap.runway.band)}` }, bandWord(snap.runway.band)),
     ]),
     gaugeHost,
-    el('p', { class: 'soft center' }, snap.runway.label),
+    el('p', { class: 'soft center' }, 'This is how many days your family could live on savings alone if all income stopped.'),
+    el('p', { class: 'muted fs-xs center' }, snap.runway.label),
     el('div', { class: 'row-between muted fs-xs' }, [
-      el('span', {}, `Liquid savings: ${money(state, snap.runway.liquid)}`),
-      el('span', {}, `Essential burn: ${money(state, snap.runway.burn)}/mo`),
+      el('span', {}, `Savings you can use: ${money(state, snap.runway.liquid)}`),
+      el('span', {}, `Monthly must-pay costs: ${money(state, snap.runway.burn)}`),
     ]),
   ]);
   runwayGauge(gaugeHost, { days: snap.runway.days, band: snap.runway.band });
@@ -470,8 +476,8 @@ function renderIncome(container, state, snap) {
   ]);
 
   const volCard = el('div', { class: 'card' }, [
-    el('h3', {}, 'Income volatility'),
-    el('p', { class: 'soft' }, `Score ${snap.volatility.score}/100 (${snap.volatility.band} over ${snap.volatility.months} months).`),
+    el('h3', {}, 'How steady is your income?'),
+    el('p', { class: 'soft' }, `Your income has been ${snap.volatility.band} over the last ${snap.volatility.months} months.`),
     snap.draw.amount ? el('p', { class: 'muted' }, `Suggested safe monthly draw: ${money(state, snap.draw.amount)} (${snap.draw.basis}).`) : null,
   ]);
 
@@ -529,7 +535,7 @@ function renderBudget(container, state, snap) {
 
   container.replaceChildren(el('div', { class: 'stack' }, [
     el('div', { class: 'row-between' }, [el('h2', {}, 'Budget'), el('div', { class: 'row' }, [copyBtn, monthNav(refresh)])]),
-    el('p', { class: 'hook-caption' }, 'Set the limit before the month starts, and the month cannot surprise you.'),
+    el('p', { class: 'hook-caption' }, 'Plan your limits early so nothing surprises you.'),
     summary,
     el('div', { class: 'card stack' }, rows),
   ]));
@@ -569,8 +575,8 @@ function renderGoals(container, state, snap) {
   const feasCard = el('div', { class: `card ${snap.feasibility.feasible ? '' : 'insight-warning'}` }, [
     el('h3', {}, 'Are goals affordable?'),
     el('p', { class: 'soft' }, snap.feasibility.feasible
-      ? `Yes: goals claim ${money(state, snap.feasibility.claimed)}/month against a surplus of ${money(state, snap.feasibility.surplus)}.`
-      : `Goals claim ${money(state, snap.feasibility.claimed)}/month, ${money(state, snap.feasibility.gap)} more than this month's surplus of ${money(state, snap.feasibility.surplus)}.`),
+      ? `Yes: your goals need ${money(state, snap.feasibility.claimed)}/month, and you have ${money(state, snap.feasibility.surplus)} left over each month.`
+      : `Your goals need ${money(state, snap.feasibility.claimed)}/month, which is ${money(state, snap.feasibility.gap)} more than the ${money(state, snap.feasibility.surplus)} you have left over this month.`),
   ]);
 
   const list = snap.goals.length ? el('div', { class: 'stack' }, snap.goals.map((g) => {
@@ -800,7 +806,7 @@ function renderSavings(container, state, snap) {
 
   container.replaceChildren(el('div', { class: 'stack' }, [
     el('h2', {}, 'Savings'),
-    el('p', { class: 'hook-caption' }, 'Pay yourself first. What is left after that is what you can spend.'),
+    el('p', { class: 'hook-caption' }, 'Save first. Spend what is left.'),
     form, totals, list,
   ]));
 }
@@ -906,7 +912,7 @@ function renderCoach(container, state, snap) {
     render();
   } }, [
     el('h3', {}, 'Ask AceBudget'),
-    el('p', { class: 'muted fs-xs' }, 'Deterministic answers computed from your own ledger, with no external AI and no network call.'),
+    el('p', { class: 'muted fs-xs' }, 'Answers come from your own numbers, worked out right here on your device. Nothing is sent online.'),
     qaInput.wrap,
     el('button', { class: 'btn btn-primary', type: 'submit' }, 'Ask'),
   ]);
@@ -929,7 +935,7 @@ function renderProfile(container, state, snap) {
   const profileForm = buildProfileForm(state);
 
   const realTermsToggle = el('div', { class: 'row-between' }, [
-    el('div', {}, [el('strong', {}, 'Real terms'), el('div', { class: 'muted fs-xs' }, 'Show savings and goal values adjusted for inflation instead of nominal.')]),
+    el('div', {}, [el('strong', {}, 'Real terms'), el('div', { class: 'muted fs-xs' }, 'Show what your savings and goals will really be worth later, after prices go up (inflation).')]),
     el('button', { class: 'btn btn-ghost', type: 'button', onclick: () => setSetting('realTerms', !state.settings.realTerms) }, state.settings.realTerms ? 'On' : 'Off'),
   ]);
 

@@ -33,11 +33,11 @@ export function coachInsights(state) {
     rows.push({
       id: 'runway-critical',
       severity: 'critical',
-      title: snap.runway.days > 0 ? `Only ${snap.runway.days} days of runway left` : 'No liquid buffer left',
+      title: snap.runway.days > 0 ? `Only ${snap.runway.days} days of runway left` : 'No savings cushion left',
       body: snap.runway.days > 0
         ? `Essential spending is running at ${money(snap.runway.burn)} a month (${money(snap.runway.burn / 30.44)}/day). ` +
-          `At that burn rate, ${money(snap.runway.liquid)} in liquid savings covers ${snap.runway.days} day${snap.runway.days === 1 ? '' : 's'} if income stopped today.`
-        : `There is no liquid savings buffer on record, and essential burn is ${money(snap.runway.burn)} a month. ` +
+          `At that pace, ${money(snap.runway.liquid)} in savings would cover ${snap.runway.days} day${snap.runway.days === 1 ? '' : 's'} if income stopped today.`
+        : `There is no savings cushion on record, and monthly must-pay costs are ${money(snap.runway.burn)}. ` +
           `A single missed pay cycle would leave nothing to draw on.`,
       metric: `${snap.runway.days} days`,
       cta: 'Build a starter buffer',
@@ -96,7 +96,7 @@ export function coachInsights(state) {
         const accelerated = simulatePayoff(debts, surplus, 'avalanche');
         const saved = sub(baseline.totalInterest, accelerated.totalInterest);
         if (saved > 0) {
-          savedLine = ` Redirecting this month's ${money(surplus)} surplus toward it first (avalanche order) would ` +
+          savedLine = ` Redirecting this month's ${money(surplus)} left over toward it first (avalanche order) would ` +
             `cut total interest paid across all debts by roughly ${money(saved)} and clear everything ${baseline.months - accelerated.months} month${(baseline.months - accelerated.months) === 1 ? '' : 's'} sooner.`;
         }
       }
@@ -164,9 +164,9 @@ export function coachInsights(state) {
     rows.push({
       id: 'goals-infeasible',
       severity: 'warning',
-      title: `Goal plans claim ${money(snap.feasibility.gap)}/month more than the household has`,
-      body: `Goals are funded for ${money(snap.feasibility.claimed)}/month in total, but this month's actual surplus is ${money(snap.feasibility.surplus)}. ` +
-        `That is a gap of ${money(snap.feasibility.gap)}: either trim a goal's monthly amount or increase surplus.`,
+      title: `Your goals need ${money(snap.feasibility.gap)}/month more than the household has`,
+      body: `Your goals need ${money(snap.feasibility.claimed)}/month in total, but you only have ${money(snap.feasibility.surplus)} left over this month. ` +
+        `That is a gap of ${money(snap.feasibility.gap)}: either lower a goal's monthly amount or free up more money.`,
       metric: money(snap.feasibility.gap),
       cta: 'Review goal funding',
       action: '#/goals',
@@ -193,9 +193,9 @@ export function coachInsights(state) {
       id: 'income-volatility-mode',
       severity: 'opportunity',
       title: 'Income looks irregular: consider switching modes',
-      body: `Income volatility over the last ${snap.volatility.months} months scores ${snap.volatility.score}/100 (${snap.volatility.band}), ` +
-        `but the profile is set to regular income. Switching to irregular-income mode uses a smoothed safe monthly draw of ${money(snap.draw.amount)} ` +
-        `instead of the raw average, which better matches how this money actually arrives.`,
+      body: `Your income has been ${snap.volatility.band} over the last ${snap.volatility.months} months, ` +
+        `but the profile is set to regular income. Switching to irregular-income mode uses a smoothed safe monthly amount of ${money(snap.draw.amount)} ` +
+        `instead of a plain average, which better matches how this money actually arrives.`,
       metric: money(snap.draw.amount),
       cta: 'Switch income mode',
       action: '#/settings',
@@ -225,8 +225,8 @@ export function coachInsights(state) {
       title: `Strong month: saving ${pct(snap.month.savingsRate)} of income`,
       body: `Runway is strong at ${snap.runway.days} days and this month's savings rate is ${pct(snap.month.savingsRate)}, well above the 20% mark. ` +
         (topGoal
-          ? `Consider directing some of that surplus (${money(snap.month.net)}) into "${topGoal.name}" to pull its ETA forward.`
-          : `Consider setting a savings goal to put this surplus to work.`),
+          ? `Consider directing some of that extra money (${money(snap.month.net)}) into "${topGoal.name}" to pull its ETA forward.`
+          : `Consider setting a savings goal to put that extra money to work.`),
       metric: pct(snap.month.savingsRate),
       cta: topGoal ? 'Boost a goal' : 'Set a goal',
       action: '#/goals',
@@ -242,7 +242,7 @@ export function coachInsights(state) {
     rows.push({
       id: 'no-essential-budgets',
       severity: 'opportunity',
-      title: 'No essential-category budgets are set',
+      title: 'No budgets set for essentials',
       body: unbudgetedTotal > 0
         ? `${money(unbudgetedTotal)} was spent this month with no budget limit tracking it. ` +
           `Setting limits on essentials (rent, utilities, groceries) makes overspend visible while it can still be corrected.`
@@ -299,9 +299,9 @@ export function answerQuestion(state, question) {
   }
 
   if (/\brunway\b|how many days|how long.*(last|survive|hold)/.test(q)) {
-    return `Runway is ${snap.runway.days} days (${snap.runway.label}). That's ${money(snap.runway.liquid)} in liquid savings ` +
-      `against essential burn of ${money(snap.runway.burn)}/month (${money(snap.runway.burn / 30.44)}/day). ` +
-      `A comfortable-spending runway, including lifestyle spend, is ${snap.runway.comfortDays} days.`;
+    return `You have ${snap.runway.days} days of runway (${snap.runway.label}). That's ${money(snap.runway.liquid)} in savings ` +
+      `against monthly must-pay costs of ${money(snap.runway.burn)} (${money(snap.runway.burn / 30.44)}/day). ` +
+      `Including everyday spending too, it stretches to ${snap.runway.comfortDays} days.`;
   }
 
   if (/\bafford\b/.test(q)) {
@@ -310,13 +310,13 @@ export function answerQuestion(state, question) {
     if (amount != null) {
       const surplus = snap.month.net;
       if (amount <= surplus) {
-        return `Likely yes: this month's surplus so far is ${money(surplus)}, which covers ${money(amount)} with ${money(sub(surplus, amount))} left over.`;
+        return `Likely yes: you have ${money(surplus)} left over so far this month, which covers ${money(amount)} with ${money(sub(surplus, amount))} to spare.`;
       }
       const daysOfRunwayLost = snap.runway.burn > 0 ? Math.round((amount / (snap.runway.burn / 30.44))) : null;
-      return `Tight: ${money(amount)} is more than this month's surplus of ${money(surplus)}. Paying it from liquid savings ` +
+      return `Tight: ${money(amount)} is more than the ${money(surplus)} you have left over this month. Paying it from savings ` +
         `(${money(snap.runway.liquid)}) would use up roughly ${daysOfRunwayLost ?? 'several'} days of runway.`;
     }
-    return `Current month surplus is ${money(snap.month.net)}, and liquid savings stand at ${money(snap.runway.liquid)} ` +
+    return `You have ${money(snap.month.net)} left over this month, and ${money(snap.runway.liquid)} in savings ` +
       `(${snap.runway.days} days of runway). Compare that against the cost to judge affordability.`;
   }
 
@@ -346,7 +346,7 @@ export function answerQuestion(state, question) {
 
   if (/\bsave\b|\bsaving/.test(q)) {
     return `This month's savings rate is ${pct(snap.month.savingsRate)} (${money(snap.month.net)} of ${money(snap.month.income)} income). ` +
-      `Total savings across all accounts is ${money(snap.worth.assets)}, of which ${money(snap.runway.liquid)} is liquid.`;
+      `Total savings across all accounts is ${money(snap.worth.assets)}, of which ${money(snap.runway.liquid)} is ready to use right away.`;
   }
 
   return fallback();

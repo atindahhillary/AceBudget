@@ -160,7 +160,7 @@ export function runway(s) {
     solid:   'Solid: three months or more of cover',
     thin:    'Thin: one shock away from borrowing',
     fragile: 'Fragile: under a month of cover',
-    exposed: 'Exposed: no liquid buffer',
+    exposed: 'No safety net: no savings to fall back on',
   }[band];
 
   return { days, comfortDays, months: r2(days / 30.44), liquid, burn, comfort, band, label,
