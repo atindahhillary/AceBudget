@@ -11,7 +11,10 @@ import {
   getState, subscribe, addItem, patchItem, removeItem,
   setProfile, setSetting, setBudget, copyBudget,
   exportJSON, importJSON, undoImport, resetAll,
+  setPin, verifyPin, clearPin,
+  exportXlsxBlob, importXlsx,
 } from './core/store.js';
+import { attachFile } from './core/attachments.js';
 import { fmt, num, pct, clamp, CURRENCIES, realValue } from './core/money.js';
 import { monthKey, monthLabel, shiftMonth, dayLabel } from './core/dates.js';
 import {
@@ -30,6 +33,7 @@ import { toastOk, toastWarn, toastError } from './ui/toast.js';
 let activeMonth = monthKey();
 let debtStrategy = null; // overrides state.settings.strategy for the simulator UI only, per-session
 let qaHistory = [];
+let unlocked = false; // app-lock PIN gate, reset every fresh load by design
 
 // --- boot ----------------------------------------------------------------
 
@@ -55,7 +59,10 @@ function registerServiceWorker() {
 function render() {
   const state = getState();
   document.documentElement.setAttribute('data-theme', state.settings.theme === 'dark' ? 'dark' : 'light');
-  mount.replaceChildren(state.profile.onboarded ? buildShell(state) : buildOnboarding(state));
+  const locked = state.profile.onboarded && state.settings.lockEnabled && state.settings.pinHash && !unlocked;
+  mount.replaceChildren(
+    locked ? buildLockScreen(state) : state.profile.onboarded ? buildShell(state) : buildOnboarding(state)
+  );
 }
 
 // --- routing ---------------------------------------------------------------
@@ -174,6 +181,111 @@ function buildOnboarding(state) {
   ]);
 
   return el('div', { class: 'onboard-screen' }, [el('div', { class: 'wrap onboard-wrap' }, form)]);
+}
+
+// --- app lock ------------------------------------------------------------------
+
+function buildLockScreen(state) {
+  const errBox = el('div', { class: 'field-error', role: 'alert' });
+  const pinField = field({
+    label: 'PIN', id: 'lock-pin', type: 'password', required: true,
+    attrs: { inputmode: 'numeric', pattern: '[0-9]*', autocomplete: 'off' },
+  });
+
+  const form = el('form', { class: 'card stack onboard-form', onsubmit: (e) => {
+    e.preventDefault();
+    const pin = pinField.input.value.trim();
+    verifyPin(pin).then((ok) => {
+      if (ok) {
+        unlocked = true;
+        render();
+      } else {
+        errBox.textContent = 'Wrong PIN. Try again.';
+        pinField.input.value = '';
+        pinField.input.focus();
+      }
+    });
+  } }, [
+    el('h1', {}, `🔒 ${state.profile.household || 'AceBudget'}`),
+    el('p', { class: 'soft' }, 'Enter your PIN to open the app.'),
+    pinField.wrap,
+    errBox,
+    el('button', { class: 'btn btn-primary btn-block btn-lg', type: 'submit' }, 'Unlock'),
+    el('button', { class: 'btn btn-quiet btn-block btn-sm', type: 'button', onclick: () => {
+      if (confirm('A forgotten PIN cannot be recovered on this local-only app. The only way back in is to erase all data on this device and start over. Erase everything now?')) {
+        resetAll();
+        toastOk('All data has been reset.');
+      }
+    } }, 'Forgot PIN?'),
+  ]);
+
+  return el('div', { class: 'onboard-screen' }, [el('div', { class: 'wrap onboard-wrap' }, form)]);
+}
+
+function buildLockSettingsCard(state) {
+  const enabled = !!(state.settings.lockEnabled && state.settings.pinHash);
+
+  if (!enabled) {
+    const pinF = field({
+      label: 'Choose a PIN (4-8 digits)', id: 'set-pin', type: 'password', required: true,
+      attrs: { inputmode: 'numeric', pattern: '[0-9]*', autocomplete: 'off' },
+    });
+    const confirmF = field({
+      label: 'Confirm PIN', id: 'set-pin-confirm', type: 'password', required: true,
+      attrs: { inputmode: 'numeric', pattern: '[0-9]*', autocomplete: 'off' },
+    });
+    const err = errorBox();
+
+    const form = el('form', { class: 'stack', onsubmit: (e) => {
+      e.preventDefault();
+      const pin = pinF.input.value.trim();
+      const confirmPin = confirmF.input.value.trim();
+      if (!/^\d{4,8}$/.test(pin)) { err.textContent = 'PIN must be 4 to 8 digits.'; return; }
+      if (pin !== confirmPin) { err.textContent = 'PINs do not match.'; return; }
+      err.textContent = '';
+      setPin(pin).then(() => {
+        toastOk('App lock turned on.');
+        pinF.input.value = ''; confirmF.input.value = '';
+      });
+    } }, [
+      el('div', { class: 'form-row' }, [pinF.wrap, confirmF.wrap]),
+      err,
+      el('button', { class: 'btn btn-primary', type: 'submit' }, 'Turn on app lock'),
+    ]);
+
+    return el('div', { class: 'card stack' }, [
+      el('h3', {}, 'App lock'),
+      el('p', { class: 'soft' }, 'Ask for a PIN every time the app opens. Good for a shared family device.'),
+      el('p', { class: 'muted fs-xs' }, 'This is a privacy screen, not encryption: the data on this device is not scrambled. If the PIN is forgotten, there is no recovery, only a full local data reset.'),
+      form,
+    ]);
+  }
+
+  const currentF = field({
+    label: 'Current PIN', id: 'off-pin', type: 'password', required: true,
+    attrs: { inputmode: 'numeric', pattern: '[0-9]*', autocomplete: 'off' },
+  });
+  const err = errorBox();
+
+  const form = el('form', { class: 'stack', onsubmit: (e) => {
+    e.preventDefault();
+    verifyPin(currentF.input.value.trim()).then((ok) => {
+      if (!ok) { err.textContent = 'Wrong PIN.'; return; }
+      err.textContent = '';
+      clearPin();
+      toastOk('App lock turned off.');
+    });
+  } }, [
+    el('div', { class: 'form-row' }, [currentF.wrap]),
+    err,
+    el('button', { class: 'btn btn-danger', type: 'submit' }, 'Turn off app lock'),
+  ]);
+
+  return el('div', { class: 'card stack' }, [
+    el('h3', {}, 'App lock'),
+    el('div', { class: 'row-between' }, [el('span', { class: 'soft' }, 'A PIN is required to open the app.'), el('span', { class: 'pill pill-ok' }, 'On')]),
+    form,
+  ]);
 }
 
 // --- shared form helpers -----------------------------------------------------
@@ -409,31 +521,58 @@ function renderTransactions(container, state, snap) {
   const noteF = field({ label: 'Note (optional)', id: 'tx-note' });
   const err = errorBox();
 
+  let pendingAttachment = null;
+  const attachStatus = el('span', { class: 'muted fs-xs' }, 'No receipt attached.');
+  const attachInput = el('input', {
+    type: 'file', accept: '.pdf,.doc,.docx,image/*', class: 'hidden', id: 'tx-attach',
+    onchange: (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      attachStatus.textContent = 'Processing...';
+      attachFile(file).then((result) => {
+        if (result.ok) {
+          pendingAttachment = result.attachment;
+          attachStatus.textContent = `Attached: ${result.attachment.name}`;
+        } else {
+          pendingAttachment = null;
+          attachStatus.textContent = result.error;
+        }
+      });
+    },
+  });
+  const attachBtn = el('button', { class: 'btn btn-ghost btn-sm', type: 'button', onclick: () => attachInput.click() }, '📎 Attach receipt');
+
   const form = el('form', { class: 'card stack', onsubmit: (e) => {
     e.preventDefault();
     const amount = num(amtF.input.value);
     if (!dateF.input.value) { err.textContent = 'A date is required.'; return; }
     if (amount <= 0) { err.textContent = 'Amount must be greater than zero.'; return; }
     err.textContent = '';
-    addItem('transactions', { date: dateF.input.value, category: catF.input.value, amount, method: methodF.input.value, note: noteF.input.value.trim() });
+    addItem('transactions', { date: dateF.input.value, category: catF.input.value, amount, method: methodF.input.value, note: noteF.input.value.trim(), attachment: pendingAttachment });
     toastOk('Transaction added.');
-    amtF.input.value = ''; noteF.input.value = '';
+    amtF.input.value = ''; noteF.input.value = ''; attachInput.value = '';
+    pendingAttachment = null; attachStatus.textContent = 'No receipt attached.';
   } }, [
     el('h3', {}, 'Add transaction'),
     el('div', { class: 'form-row' }, [dateF.wrap, catF.wrap, amtF.wrap, methodF.wrap]),
-    noteF.wrap, err,
+    noteF.wrap,
+    el('div', { class: 'row' }, [attachBtn, attachStatus]),
+    el('p', { class: 'muted fs-xs' }, 'PDF, Word doc, or a photo of the receipt: attached for reference only, never auto-read.'),
+    attachInput,
+    err,
     el('button', { class: 'btn btn-primary', type: 'submit' }, 'Add'),
   ]);
 
   const table = rows.length
     ? el('div', { class: 'table-scroll' }, [el('table', { class: 'data' }, [
-        el('thead', {}, el('tr', {}, ['Date', 'Category', 'Method', 'Note', 'Amount', ''].map((h, i) => el(i === 4 ? 'th' : 'th', { class: i === 4 ? 'r' : null }, h)))),
+        el('thead', {}, el('tr', {}, ['Date', 'Category', 'Method', 'Note', 'Amount', '', ''].map((h, i) => el('th', { class: i === 4 ? 'r' : null }, h)))),
         el('tbody', {}, rows.map((r) => el('tr', {}, [
           el('td', {}, dayLabel(r.date, true)),
           el('td', {}, `${catName(r.category)}`),
           el('td', {}, methodName(r.method)),
           el('td', {}, r.note || '-'),
           el('td', { class: 'r num' }, money(state, r.amount)),
+          el('td', {}, r.attachment ? el('button', { class: 'btn btn-quiet btn-sm', type: 'button', 'aria-label': `View receipt for ${catName(r.category)}`, onclick: () => openAttachment(r.attachment) }, '📎') : null),
           el('td', {}, deleteBtn(() => { removeItem('transactions', r.id); toastOk('Transaction removed.'); })),
         ]))),
       ])])
@@ -970,21 +1109,36 @@ function renderSettings(container, state, snap) {
     ]),
   ]);
 
-  const exportBtn = el('button', { class: 'btn btn-ghost', type: 'button', onclick: () => downloadJSON(exportJSON()) }, 'Export data (.json)');
-  const importInput = el('input', { type: 'file', accept: 'application/json', class: 'hidden', onchange: (e) => {
+  const exportXlsxBtn = el('button', { class: 'btn btn-ghost', type: 'button', onclick: () => {
+    downloadBlob(exportXlsxBlob(), `acebudget-${todayISO()}.xlsx`);
+  } }, 'Export to Excel (.xlsx)');
+  const exportJsonBtn = el('button', { class: 'btn btn-quiet btn-sm', type: 'button', onclick: () => downloadJSON(exportJSON()) }, 'Full backup (.json)');
+
+  const xlsxInput = el('input', { type: 'file', accept: '.xlsx', class: 'hidden', onchange: (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    file.arrayBuffer().then(importXlsx).then((result) => {
+      if (result.ok) toastOk(`Imported ${result.added} row${result.added === 1 ? '' : 's'} from Excel.`);
+      else toastError(result.error || 'Import failed.');
+      e.target.value = '';
+    });
+  } });
+  const importXlsxBtn = el('button', { class: 'btn btn-ghost', type: 'button', onclick: () => xlsxInput.click() }, 'Import from Excel (.xlsx)');
+
+  const jsonInput = el('input', { type: 'file', accept: 'application/json', class: 'hidden', onchange: (e) => {
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
       const result = importJSON(String(reader.result));
-      if (result.ok) toastOk('Import successful. Previous data was backed up for undo.');
+      if (result.ok) toastOk('Backup restored. Previous data was backed up for undo.');
       else toastError(result.error || 'Import failed.');
       e.target.value = '';
     };
     reader.readAsText(file);
   } });
-  const importBtn = el('button', { class: 'btn btn-ghost', type: 'button', onclick: () => importInput.click() }, 'Import data (.json)');
-  const undoBtn = el('button', { class: 'btn btn-quiet', type: 'button', onclick: () => { if (undoImport()) toastOk('Import undone.'); else toastWarn('Nothing to undo.'); } }, 'Undo last import');
+  const importJsonBtn = el('button', { class: 'btn btn-quiet btn-sm', type: 'button', onclick: () => jsonInput.click() }, 'Restore full backup (.json)');
+  const undoBtn = el('button', { class: 'btn btn-quiet btn-sm', type: 'button', onclick: () => { if (undoImport()) toastOk('Import undone.'); else toastWarn('Nothing to undo.'); } }, 'Undo last import');
 
   const dangerZone = el('div', { class: 'card', style: { borderColor: 'var(--bad)' } }, [
     el('h3', {}, 'Danger zone'),
@@ -1003,12 +1157,23 @@ function renderSettings(container, state, snap) {
     el('p', { class: 'muted fs-xs' }, 'Household details, currency and inflation assumptions live under Profile.'),
   ]);
 
+  const dataCard = el('div', { class: 'card stack' }, [
+    el('h3', {}, 'Your data'),
+    el('p', { class: 'soft' }, 'Everything lives in this browser\'s local storage. Nothing is ever sent anywhere.'),
+    el('div', { class: 'row' }, [exportXlsxBtn, importXlsxBtn]),
+    el('p', { class: 'muted fs-xs' }, 'Excel import reads rows from "Transactions" and "Income" sheets, matching the layout of the export.'),
+    el('div', { class: 'row' }, [exportJsonBtn, importJsonBtn, undoBtn]),
+    el('p', { class: 'muted fs-xs' }, 'The full backup (.json) is the only format that restores everything exactly, including budgets, goals, debts and settings.'),
+    xlsxInput, jsonInput,
+  ]);
+
   container.replaceChildren(el('div', { class: 'stack' }, [
     el('h2', {}, 'Settings'),
     el('p', { class: 'hook-caption' }, 'Your data, your device, your rules. Nothing leaves without your say.'),
     el('div', { class: 'card stack' }, [themeToggle]),
     pwaCard,
-    el('div', { class: 'card stack' }, [el('h3', {}, 'Your data'), el('p', { class: 'soft' }, 'Everything lives in this browser\'s local storage. Nothing is ever sent anywhere.'), el('div', { class: 'row' }, [exportBtn, importBtn, undoBtn]), importInput]),
+    buildLockSettingsCard(state),
+    dataCard,
     aboutCard,
     dangerZone,
   ]));
@@ -1040,15 +1205,30 @@ function buildProfileForm(state) {
 }
 
 function downloadJSON(text) {
-  const blob = new Blob([text], { type: 'application/json' });
+  downloadBlob(new Blob([text], { type: 'application/json' }), `acebudget-backup-${todayISO()}.json`);
+}
+
+function downloadBlob(blob, filename) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `acebudget-backup-${todayISO()}.json`;
+  a.download = filename;
   document.body.appendChild(a);
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
+}
+
+/** Open a stored receipt (data URL) in a new tab via a short-lived blob URL. */
+function openAttachment(attachment) {
+  fetch(attachment.dataUrl)
+    .then((res) => res.blob())
+    .then((blob) => {
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank', 'noopener');
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    })
+    .catch(() => toastError('Could not open that receipt.'));
 }
 
 boot();

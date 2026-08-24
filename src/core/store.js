@@ -44,6 +44,8 @@ export function emptyState() {
       strategy: 'avalanche',      // debt payoff default
       dismissed: [],              // coach insight ids the user has cleared
       lastOpened: monthKey(),
+      lockEnabled: false,         // app-open PIN screen (privacy screen, not encryption)
+      pinHash: null,              // SHA-256 hex digest of the PIN; never the PIN itself
     },
   };
 }
@@ -315,6 +317,40 @@ export async function importXlsx(buffer) {
     }
   });
   return { ok: true, added };
+}
+
+// --- app lock ---------------------------------------------------------------
+//
+// A PIN screen shown on open, meant for a shared family device: it keeps
+// casual eyes out. It is NOT encryption, and does not need to pretend to be
+// one — the ledger in localStorage is unencrypted either way, and anyone
+// with developer-tools access to this browser can still read it. There is
+// no server, so a forgotten PIN cannot be recovered; only a full local reset
+// clears it. Every screen that sets a PIN says this plainly first.
+
+async function sha256Hex(text) {
+  const bytes = new TextEncoder().encode(text);
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+/** Turn app-lock on with a new PIN (4-8 digits). */
+export async function setPin(pin) {
+  const hash = await sha256Hex(String(pin));
+  update((d) => { d.settings.pinHash = hash; d.settings.lockEnabled = true; });
+}
+
+/** Check a PIN attempt against the stored hash. Never throws on a wrong guess. */
+export async function verifyPin(pin) {
+  const s = getState();
+  if (!s.settings.pinHash) return true;
+  const hash = await sha256Hex(String(pin));
+  return hash === s.settings.pinHash;
+}
+
+/** Turn app-lock off. Requires the caller to have already verified the current PIN. */
+export function clearPin() {
+  update((d) => { d.settings.pinHash = null; d.settings.lockEnabled = false; });
 }
 
 /** Wipe everything on this device. Irreversible by design. */
