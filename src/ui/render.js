@@ -194,7 +194,7 @@ export function runwayGauge(container, { days = 0, band = 'thin', scaleMax = 270
   svg.setAttribute('viewBox', `0 0 ${size} ${size}`);
   svg.setAttribute('class', 'gauge-svg');
   svg.setAttribute('role', 'img');
-  svg.setAttribute('aria-label', `${Math.round(days)} days of runway`);
+  svg.setAttribute('aria-label', `${Math.round(days)} safe days`);
 
   const track = document.createElementNS(svgNS, 'path');
   track.setAttribute('d', arcPath(cx, cy, r, startAngle, endAngle));

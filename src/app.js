@@ -109,7 +109,7 @@ function buildShell(state) {
       state.profile.household ? el('span', { class: 'muted' }, `· ${state.profile.household}`) : null,
     ]),
     el('div', { class: 'row' }, [
-      el('span', { class: `pill ${runwayPillClass(snap.runway.band)}` }, `${snap.runway.days}d runway`),
+      el('span', { class: `pill ${runwayPillClass(snap.runway.band)}` }, `${snap.runway.days} safe days`),
     ]),
   ]);
 
@@ -345,16 +345,16 @@ function refresh() { render(); }
 function renderDashboard(container, state, snap) {
   const cur = state.profile.currency;
 
-  // --- runway hero ---
+  // --- safe days hero ---
   const gaugeHost = el('div', { class: 'gauge-host' });
   const runwayCard = el('div', { class: 'card rise runway-card' }, [
     el('div', { class: 'row-between' }, [
-      el('h2', {}, 'Runway'),
+      el('h2', {}, 'Safe Days'),
       el('span', { class: `pill ${runwayPillClass(snap.runway.band)}` }, bandWord(snap.runway.band)),
     ]),
     gaugeHost,
-    el('p', { class: 'soft center' }, 'This is how many days your family could live on savings alone if all income stopped.'),
-    el('p', { class: 'muted fs-xs center' }, snap.runway.label),
+    el('p', { class: 'soft' }, 'How many days your family could live on savings alone if income stopped today.'),
+    el('p', { class: 'muted fs-xs' }, snap.runway.label),
     el('div', { class: 'row-between muted fs-xs' }, [
       el('span', {}, `Savings you can use: ${money(state, snap.runway.liquid)}`),
       el('span', {}, `Monthly must-pay costs: ${money(state, snap.runway.burn)}`),
@@ -497,7 +497,7 @@ function renderDashboard(container, state, snap) {
   ]);
 
   container.replaceChildren(el('div', { class: 'stack dashboard-stack' }, [
-    el('p', { class: 'hook-caption' }, 'Every day of runway is a day of freedom you already paid for.'),
+    el('p', { class: 'hook-caption' }, 'Every safe day is a day of freedom you already paid for.'),
     el('div', { class: 'grid dashboard-hero' }, [runwayCard, comparisonCard]),
     el('div', { class: 'grid dashboard-charts' }, [flowCard, donutCard]),
     el('div', { class: 'grid dashboard-cards' }, [coachCard, subsCard, goalsCard, tierCard]),
@@ -750,7 +750,7 @@ function renderDebt(container, state, snap) {
   const nameF = field({ label: 'Name', id: 'd-name', required: true });
   const typeF = selectField({ label: 'Type', id: 'd-type', options: DEBT_TYPES.map((t) => ({ value: t.id, label: t.name })) });
   const balF = field({ label: 'Balance', id: 'd-bal', type: 'number', attrs: { min: '0', step: '0.01' }, required: true });
-  const aprF = field({ label: 'APR %', id: 'd-apr', type: 'number', attrs: { min: '0', step: '0.1' }, required: true });
+  const aprF = field({ label: 'Interest rate %', id: 'd-apr', type: 'number', attrs: { min: '0', step: '0.1' }, required: true });
   const minF = field({ label: 'Min. monthly payment', id: 'd-min', type: 'number', attrs: { min: '0', step: '0.01' }, required: true });
   const lenderF = field({ label: 'Lender (optional)', id: 'd-lender' });
   const err = errorBox();
@@ -762,7 +762,7 @@ function renderDebt(container, state, snap) {
     const minPayment = num(minF.input.value);
     if (!nameF.input.value.trim()) { err.textContent = 'Name is required.'; return; }
     if (balance <= 0) { err.textContent = 'Balance must be greater than zero.'; return; }
-    if (apr < 0 || minPayment < 0) { err.textContent = 'APR and payment cannot be negative.'; return; }
+    if (apr < 0 || minPayment < 0) { err.textContent = 'Interest rate and payment cannot be negative.'; return; }
     err.textContent = '';
     addItem('debts', { name: nameF.input.value.trim(), type: typeF.input.value, balance, apr, minPayment, lender: lenderF.input.value.trim() });
     toastOk('Debt added.');
@@ -777,12 +777,12 @@ function renderDebt(container, state, snap) {
   const summary = el('div', { class: 'card row-between' }, [
     statBlock('Total balance', money(state, snap.debt.total)),
     statBlock('Monthly interest', money(state, snap.debt.monthlyInterest)),
-    statBlock('Debt-to-income', pct(snap.debt.dti)),
-    statBlock('Avg. APR', `${snap.debt.avgApr}%`),
+    statBlock('Share of income going to debt', pct(snap.debt.dti)),
+    statBlock('Avg. interest rate', `${snap.debt.avgApr}%`),
   ]);
 
   const list = snap.debt.debts.length ? el('div', { class: 'table-scroll' }, [el('table', { class: 'data' }, [
-    el('thead', {}, el('tr', {}, ['Name', 'Type', 'Balance', 'APR', 'Min. payment', ''].map((h, i) => el('th', { class: i >= 2 && i <= 4 ? 'r' : null }, h)))),
+    el('thead', {}, el('tr', {}, ['Name', 'Type', 'Balance', 'Interest', 'Min. payment', ''].map((h, i) => el('th', { class: i >= 2 && i <= 4 ? 'r' : null }, h)))),
     el('tbody', {}, snap.debt.debts.map((d) => el('tr', {}, [
       el('td', {}, d.name), el('td', {}, DEBT_TYPES.find((t) => t.id === d.type)?.name || '-'),
       el('td', { class: 'r num' }, money(state, d.balance)), el('td', { class: 'r num' }, `${num(d.apr)}%`), el('td', { class: 'r num' }, money(state, num(d.minPayment))),
@@ -897,11 +897,11 @@ function renderSavings(container, state, snap) {
   const nameF = field({ label: 'Name', id: 'sv-name', required: true });
   const balF = field({ label: 'Balance', id: 'sv-bal', type: 'number', attrs: { min: '0', step: '0.01' }, required: true });
   const targetF = field({ label: 'Target (optional)', id: 'sv-target', type: 'number', attrs: { min: '0', step: '0.01' }, value: '0' });
-  const aprF = field({ label: 'APR % (optional)', id: 'sv-apr', type: 'number', attrs: { min: '0', step: '0.1' }, value: '0' });
+  const aprF = field({ label: 'Interest rate % (optional)', id: 'sv-apr', type: 'number', attrs: { min: '0', step: '0.1' }, value: '0' });
   const kindF = selectField({ label: 'Kind', id: 'sv-kind', options: [
     { value: 'cash', label: 'Cash / mobile money' }, { value: 'bank', label: 'Bank savings' }, { value: 'sacco', label: 'SACCO / Chama' }, { value: 'invest', label: 'Investment' },
   ] });
-  const liquidF = checkboxField({ label: 'Liquid: counts toward runway', id: 'sv-liquid', checked: true });
+  const liquidF = checkboxField({ label: 'Can be used right away (counts toward Safe Days)', id: 'sv-liquid', checked: true });
   const err = errorBox();
 
   const form = el('form', { class: 'card stack', onsubmit: (e) => {
@@ -924,8 +924,8 @@ function renderSavings(container, state, snap) {
     const realBalance = state.settings.realTerms ? realValue(num(a.balance), state.profile.inflation, 12) : null;
     return el('div', { class: 'card row-between' }, [
       el('div', {}, [
-        el('div', { class: 'row' }, [el('strong', {}, a.name), a.liquid === false ? el('span', { class: 'pill' }, 'not liquid') : el('span', { class: 'pill pill-ok' }, 'liquid')]),
-        el('div', { class: 'muted' }, `${a.kind || 'cash'} · APR ${num(a.apr)}%${a.target ? ` · target ${money(state, num(a.target))}` : ''}`),
+        el('div', { class: 'row' }, [el('strong', {}, a.name), a.liquid === false ? el('span', { class: 'pill' }, 'not ready to use') : el('span', { class: 'pill pill-ok' }, 'ready to use')]),
+        el('div', { class: 'muted' }, `${a.kind || 'cash'} · ${num(a.apr)}% interest${a.target ? ` · target ${money(state, num(a.target))}` : ''}`),
       ]),
       el('div', { class: 'row' }, [
         el('div', { class: 'num fs-lg' }, [
@@ -939,7 +939,7 @@ function renderSavings(container, state, snap) {
 
   const totals = el('div', { class: 'card row-between' }, [
     statBlock('Total savings', money(state, snap.worth.assets)),
-    statBlock('Liquid (counts toward runway)', money(state, snap.runway.liquid)),
+    statBlock('Ready to use (counts toward Safe Days)', money(state, snap.runway.liquid)),
     statBlock('Net worth', money(state, snap.worth.net)),
   ]);
 
@@ -977,11 +977,11 @@ function renderCashflow(container, state, snap) {
     const result = shockTest(state, { incomeDropPct: clamp(num(dropF.input.value) / 100, 0, 1), months: Math.max(1, num(monthsF.input.value)), oneOffCost: Math.max(0, num(costF.input.value)) });
     shockResult.replaceChildren(
       el('div', { class: `insight ${result.verdict.survives ? 'insight-positive' : 'insight-critical'}` }, [
-        el('strong', {}, result.verdict.survives ? 'The household survives this scenario' : `Runs out of liquid savings in month ${result.verdict.monthsUntilZero}`),
+        el('strong', {}, result.verdict.survives ? 'The household survives this scenario' : `Runs out of savings in month ${result.verdict.monthsUntilZero}`),
         el('p', {}, `Worst balance reached: ${money(state, result.verdict.worstBalance)}.`),
       ]),
       el('div', { class: 'table-scroll' }, [el('table', { class: 'data' }, [
-        el('thead', {}, el('tr', {}, ['Month', 'Income', 'Essential burn', 'Net', 'Balance'].map((h, i) => el('th', { class: i > 0 ? 'r' : null }, h)))),
+        el('thead', {}, el('tr', {}, ['Month', 'Income', 'Must-pay costs', 'Net', 'Balance'].map((h, i) => el('th', { class: i > 0 ? 'r' : null }, h)))),
         el('tbody', {}, result.series.map((m) => el('tr', {}, [
           el('td', {}, `M${m.month}`), el('td', { class: 'r num' }, money(state, m.income)), el('td', { class: 'r num' }, money(state, m.burn)), el('td', { class: 'r num' }, money(state, m.net)),
           el('td', { class: `r num${m.balance < 0 ? ' text-bad' : ''}` }, money(state, m.balance)),
@@ -992,7 +992,7 @@ function renderCashflow(container, state, snap) {
 
   const shockCard = el('div', { class: 'card stack' }, [
     el('h3', {}, 'Shock test'),
-    el('p', { class: 'soft' }, 'Model an income drop and an optional one-off cost against current liquid savings and essential burn.'),
+    el('p', { class: 'soft' }, 'Model an income drop and a one-off cost against your savings and monthly must-pay costs.'),
     el('div', { class: 'form-row' }, [dropF.wrap, monthsF.wrap, costF.wrap]),
     el('button', { class: 'btn btn-ghost', type: 'button', onclick: runShock }, 'Run shock test'),
     shockResult,
@@ -1035,7 +1035,7 @@ function renderCoach(container, state, snap) {
     ins.action ? el('a', { href: ins.action, class: 'btn btn-ghost btn-sm' }, ins.cta || 'View') : null,
   ]))) : emptyState('No insights right now: the household looks steady.');
 
-  const qaInput = field({ label: 'Ask a question', id: 'qa-input', hint: 'e.g. "How many days of runway do I have?" or "Can I afford 5000?"' });
+  const qaInput = field({ label: 'Ask a question', id: 'qa-input', hint: 'e.g. "How many safe days do I have?" or "Can I afford 5000?"' });
   const qaLog = el('div', { class: 'stack qa-log' }, qaHistory.map((entry) => el('div', { class: 'card' }, [
     el('p', {}, [el('strong', {}, 'Q: '), entry.q]),
     el('p', { class: 'soft' }, [el('strong', {}, 'A: '), entry.a]),
@@ -1081,7 +1081,7 @@ function renderProfile(container, state, snap) {
   container.replaceChildren(el('div', { class: 'stack' }, [
     el('h2', {}, 'Profile'),
     el('p', { class: 'hook-caption' }, 'Get the assumptions right here, and every number downstream tells the truth.'),
-    el('p', { class: 'soft' }, 'Household details and the financial assumptions AceBudget uses to compute runway, real-terms values and safe income draws.'),
+    el('p', { class: 'soft' }, 'Household details and the assumptions AceBudget uses to work out your Safe Days, real-terms values, and a safe monthly income amount.'),
     profileForm,
     el('div', { class: 'card stack' }, [realTermsToggle]),
   ]));

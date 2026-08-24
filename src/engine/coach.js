@@ -28,12 +28,12 @@ export function coachInsights(state) {
   const money = (n) => fmt(n, cur);
   const rows = [];
 
-  // --- runway ---------------------------------------------------------
+  // --- safe days --------------------------------------------------------
   if (snap.runway.band === 'fragile' || snap.runway.band === 'exposed') {
     rows.push({
       id: 'runway-critical',
       severity: 'critical',
-      title: snap.runway.days > 0 ? `Only ${snap.runway.days} days of runway left` : 'No savings cushion left',
+      title: snap.runway.days > 0 ? `Only ${snap.runway.days} safe days left` : 'No savings cushion left',
       body: snap.runway.days > 0
         ? `Essential spending is running at ${money(snap.runway.burn)} a month (${money(snap.runway.burn / 30.44)}/day). ` +
           `At that pace, ${money(snap.runway.liquid)} in savings would cover ${snap.runway.days} day${snap.runway.days === 1 ? '' : 's'} if income stopped today.`
@@ -223,7 +223,7 @@ export function coachInsights(state) {
       id: 'positive-strong-month',
       severity: 'positive',
       title: `Strong month: saving ${pct(snap.month.savingsRate)} of income`,
-      body: `Runway is strong at ${snap.runway.days} days and this month's savings rate is ${pct(snap.month.savingsRate)}, well above the 20% mark. ` +
+      body: `You have ${snap.runway.days} safe days and this month's savings rate is ${pct(snap.month.savingsRate)}, well above the 20% mark. ` +
         (topGoal
           ? `Consider directing some of that extra money (${money(snap.month.net)}) into "${topGoal.name}" to pull its ETA forward.`
           : `Consider setting a savings goal to put that extra money to work.`),
@@ -298,8 +298,8 @@ export function answerQuestion(state, question) {
     return fallback();
   }
 
-  if (/\brunway\b|how many days|how long.*(last|survive|hold)/.test(q)) {
-    return `You have ${snap.runway.days} days of runway (${snap.runway.label}). That's ${money(snap.runway.liquid)} in savings ` +
+  if (/\brunway\b|\bsafe days\b|how many days|how long.*(last|survive|hold)/.test(q)) {
+    return `You have ${snap.runway.days} safe days (${snap.runway.label}). That's ${money(snap.runway.liquid)} in savings you can use ` +
       `against monthly must-pay costs of ${money(snap.runway.burn)} (${money(snap.runway.burn / 30.44)}/day). ` +
       `Including everyday spending too, it stretches to ${snap.runway.comfortDays} days.`;
   }
@@ -314,18 +314,18 @@ export function answerQuestion(state, question) {
       }
       const daysOfRunwayLost = snap.runway.burn > 0 ? Math.round((amount / (snap.runway.burn / 30.44))) : null;
       return `Tight: ${money(amount)} is more than the ${money(surplus)} you have left over this month. Paying it from savings ` +
-        `(${money(snap.runway.liquid)}) would use up roughly ${daysOfRunwayLost ?? 'several'} days of runway.`;
+        `(${money(snap.runway.liquid)}) would use up roughly ${daysOfRunwayLost ?? 'several'} safe days.`;
     }
     return `You have ${money(snap.month.net)} left over this month, and ${money(snap.runway.liquid)} in savings ` +
-      `(${snap.runway.days} days of runway). Compare that against the cost to judge affordability.`;
+      `(${snap.runway.days} safe days). Compare that against the cost to judge affordability.`;
   }
 
   if (/\bdebt\b|\bloan\b/.test(q)) {
     if (!snap.debt.debts.length) return 'No debts are on record.';
     const worst = snap.debt.worst;
     return `Total debt is ${money(snap.debt.total)} across ${snap.debt.debts.length} debt${snap.debt.debts.length === 1 ? '' : 's'}, ` +
-      `costing about ${money(snap.debt.monthlyInterest)}/month in interest. Debt service is ${pct(snap.debt.dti)} of income. ` +
-      (worst ? `The highest-rate debt is ${worst.name || 'unnamed'} at ${num(worst.apr)}% APR: attack that one first.` : '');
+      `costing about ${money(snap.debt.monthlyInterest)}/month in interest. Debt payments take up ${pct(snap.debt.dti)} of income. ` +
+      (worst ? `The highest-rate debt is ${worst.name || 'unnamed'} at ${num(worst.apr)}% interest: attack that one first.` : '');
   }
 
   if (/subscription|recurring|renewal/.test(q)) {
@@ -353,7 +353,7 @@ export function answerQuestion(state, question) {
 
   function fallback() {
     return "I couldn't match that to a question I know how to answer. Try asking things like: " +
-      '"How many days of runway do I have?", "Can I afford 5000?", "What is my debt situation?", ' +
+      '"How many safe days do I have?", "Can I afford 5000?", "What is my debt situation?", ' +
       '"Any dormant subscriptions?", "How are my goals doing?", or "What is my savings rate?"';
   }
 }
