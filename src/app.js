@@ -234,7 +234,7 @@ function buildLockScreen(state) {
     } }, 'Forgot PIN?'),
   ]);
 
-  return screenShell(form);
+  return screenShell(form, { banner: true });
 }
 
 function buildLockSettingsCard(state) {

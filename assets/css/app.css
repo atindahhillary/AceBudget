@@ -76,9 +76,10 @@
 .onboard-wrap { max-width: 480px; }
 .onboard-form { padding: var(--sp-6); }
 
-/* Brand band across the top of the welcome screen. Roughly 2in (192px) tall at
-   96dpi, with the text centred on both axes. Trimmed on small screens so the
-   sign-up card is not pushed off the fold on a phone. */
+/* Brand band across the top of the welcome and lock screens. 192px tall
+   (about 2in at 96dpi) at every width, with the text centred on both axes.
+   On narrow screens the text wraps to two or three lines and still sits
+   inside the 192px band, so the height stays constant. */
 .brand-banner {
   min-height: 192px;
   display: flex;
@@ -96,10 +97,6 @@
   line-height: 1.6;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-}
-@media (max-width: 600px) {
-  .brand-banner { min-height: 140px; padding: var(--sp-5) var(--sp-4); }
-  .brand-banner-text { font-size: var(--fs-base); letter-spacing: 0.05em; }
 }
 
 /* --- dashboard grid --- */
