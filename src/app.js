@@ -180,7 +180,22 @@ function buildOnboarding(state) {
     el('button', { class: 'btn btn-primary btn-block btn-lg', type: 'submit' }, 'Start budgeting'),
   ]);
 
-  return el('div', { class: 'onboard-screen' }, [el('div', { class: 'wrap onboard-wrap' }, form)]);
+  return screenShell(form, { banner: true });
+}
+
+/** Brand band across the top of the welcome screen. */
+function brandBanner() {
+  return el('header', { class: 'brand-banner' }, [
+    el('p', { class: 'brand-banner-text' }, 'Adhi Racho Ltd · Family Budget · Building the family we are becoming'),
+  ]);
+}
+
+/** Full-screen shell shared by the welcome and lock screens. */
+function screenShell(content, { banner = false } = {}) {
+  return el('div', { class: 'onboard-screen' }, [
+    banner ? brandBanner() : null,
+    el('div', { class: 'onboard-body' }, [el('div', { class: 'wrap onboard-wrap' }, content)]),
+  ]);
 }
 
 // --- app lock ------------------------------------------------------------------
@@ -219,7 +234,7 @@ function buildLockScreen(state) {
     } }, 'Forgot PIN?'),
   ]);
 
-  return el('div', { class: 'onboard-screen' }, [el('div', { class: 'wrap onboard-wrap' }, form)]);
+  return screenShell(form);
 }
 
 function buildLockSettingsCard(state) {

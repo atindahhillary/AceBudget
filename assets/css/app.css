@@ -71,9 +71,36 @@
 }
 
 /* --- onboarding --- */
-.onboard-screen { min-height: 100vh; display: flex; align-items: center; background: var(--canvas); padding: var(--sp-5) 0; }
+.onboard-screen { min-height: 100vh; display: flex; flex-direction: column; background: var(--canvas); }
+.onboard-body { flex: 1 1 auto; display: flex; align-items: center; padding: var(--sp-5) 0; }
 .onboard-wrap { max-width: 480px; }
 .onboard-form { padding: var(--sp-6); }
+
+/* Brand band across the top of the welcome screen. Roughly 2in (192px) tall at
+   96dpi, with the text centred on both axes. Trimmed on small screens so the
+   sign-up card is not pushed off the fold on a phone. */
+.brand-banner {
+  min-height: 192px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-6) var(--sp-5);
+  background: var(--brand-600);
+  color: #fff;
+  text-align: center;
+}
+.brand-banner-text {
+  max-width: var(--maxw);
+  font-size: var(--fs-md);
+  font-weight: 700;
+  line-height: 1.6;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+@media (max-width: 600px) {
+  .brand-banner { min-height: 140px; padding: var(--sp-5) var(--sp-4); }
+  .brand-banner-text { font-size: var(--fs-base); letter-spacing: 0.05em; }
+}
 
 /* --- dashboard grid --- */
 .grid { display: grid; gap: var(--sp-4); }
