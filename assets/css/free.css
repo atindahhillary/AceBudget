@@ -1,0 +1,32 @@
+/* ==========================================================================
+   AceBudget Free: the few extras the free sample needs on top of base.css
+   and app.css. Everything else (tokens, cards, forms, tables, nav, shell)
+   is shared with the full app so the two stay visually identical.
+   ========================================================================== */
+
+/* Sections are reached by in-page nav links; keep headings clear of the
+   sticky top bar when the page scrolls to them. */
+.free-section { scroll-margin-top: 80px; }
+
+.free-topbar-actions { gap: var(--sp-2); }
+.free-topbar-actions select { width: auto; padding-block: 6px; font-size: var(--fs-sm); }
+
+.summary-grid { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.summary-stat .num { font-size: var(--fs-xl); font-weight: 700; color: var(--ink); }
+.summary-stat.is-positive .num { color: var(--ok); }
+.summary-stat.is-negative .num { color: var(--bad); }
+
+.row-actions { justify-content: flex-end; gap: var(--sp-1); flex-wrap: nowrap; }
+
+/* On a phone, stack Edit/Delete so the tables fit without sideways scrolling. */
+@media (max-width: 600px) {
+  .row-actions { flex-direction: column; align-items: flex-end; gap: 0; }
+  .free-section table.data th, .free-section table.data td { padding-inline: 8px; }
+  .free-section table.data tfoot th { white-space: normal; }
+}
+
+.form-actions { gap: var(--sp-2); flex-wrap: wrap; }
+
+.full-version-list { list-style: none; display: grid; gap: var(--sp-2); grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.full-version-list li { display: flex; gap: var(--sp-2); align-items: baseline; color: var(--text-soft); font-size: var(--fs-sm); }
+.full-version-list li::before { content: "\2713"; color: var(--ok); font-weight: 700; }

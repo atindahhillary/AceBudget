@@ -8,6 +8,10 @@ A free, local-first household budgeting web app. No account, no bank password, n
 
 *(Live once GitHub Pages finishes its first deploy; see [Deploy status](../../actions). Nothing to install, no signup, no bank link.)*
 
+### 🌱 [**Try the free sample →**](https://atindahhillary.github.io/AceBudget/free/)
+
+A short, fully working version: income, expenses, money remaining, and one savings goal. It lives in `free/` and `src/free.js`, keeps its own saved data, and does not touch the full app.
+
 ## The core differentiator
 
 Most budgeting tools solve one of three layers: **capture** (getting money events into the system), **compute** (turning them into real numbers), or **counsel** (telling you what to do next), and inherit the failures of the other two. AceBudget is opinionated, computational, private, free, and offline-capable, all at once. Its north-star metric, **Runway Days**, answers the question that matters under stress: *how many days can this household survive at current essential spending if income stopped today?*
