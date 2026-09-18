@@ -344,7 +344,6 @@ function fullVersionSection() {
     el('p', { class: 'hook-caption' }, 'You have the basics. The full AceBudget helps you plan ahead.'),
     el('p', { class: 'soft' }, 'These sections are part of the complete AceBudget and are locked in this free sample.'),
     el('div', { class: 'grid locked-grid' }, cards),
-    el('div', {}, el('a', { class: 'btn btn-primary', href: '../site/index.html' }, 'See everything in the full version')),
   ]);
 }
 
