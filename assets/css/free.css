@@ -27,25 +27,10 @@
 
 .form-actions { gap: var(--sp-2); flex-wrap: wrap; }
 
-/* --- locked (full version only) areas ---------------------------------------
-   Menu labels and one-line hints so people know the complete app has more.
-   None of them are links or controls. */
+/* --- full version hints ------------------------------------------------------
+   One-line plain-text notes that the complete app has more. Not links. */
 .lock-badge { font-size: 0.8em; line-height: 1; }
-
-.nav-divider {
-  padding: var(--sp-4) 12px var(--sp-1);
-  font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
-  color: var(--text-mute);
-}
-.nav-link-locked { color: var(--text-mute); cursor: default; }
-.nav-link-locked:hover { background: none; color: var(--text-mute); }
-.nav-link-locked .nav-icon { position: relative; opacity: 0.55; }
-.nav-link-locked .nav-icon .lock-badge { position: absolute; right: -6px; bottom: -4px; font-size: 0.65em; opacity: 1; }
 
 .locked-hint { display: flex; align-items: center; gap: var(--sp-2); font-size: var(--fs-sm); color: var(--text-mute); }
 .locked-hint strong { color: var(--brand-600); font-weight: 600; }
 :root[data-theme="dark"] .locked-hint strong { color: var(--brand-300); }
-
-@media (max-width: 720px) {
-  .nav-divider { display: none; }
-}

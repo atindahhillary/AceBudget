@@ -37,20 +37,6 @@ const SECTIONS = [
   { id: 'savings',  label: 'Savings goal', icon: '🏦' },
 ];
 
-/**
- * Sections that exist only in the full app. Listed in the menu so people know
- * they are there, but they are plain labels: not links, not focusable, and
- * not clickable. Icons match the full app's nav.
- */
-const LOCKED = [
-  { id: 'budget',        label: 'Budget',        icon: '📊' },
-  { id: 'goals',         label: 'Goals',         icon: '🎯' },
-  { id: 'debt',          label: 'Debt',          icon: '💳' },
-  { id: 'subscriptions', label: 'Subscriptions', icon: '🔁' },
-  { id: 'cashflow',      label: 'Cash Flow',     icon: '📈' },
-  { id: 'coach',         label: 'Coach',         icon: '🧭' },
-];
-
 // --- state -------------------------------------------------------------------
 
 let state = load();
@@ -369,16 +355,6 @@ function render() {
       class: `nav-link${s.id === active ? ' nav-link-active' : ''}`,
       'aria-current': s.id === active ? 'true' : null,
     }, [el('span', { class: 'nav-icon', 'aria-hidden': 'true' }, s.icon), el('span', { class: 'nav-label' }, s.label)])),
-    el('div', { class: 'nav-divider', 'aria-hidden': 'true' }, 'Full version'),
-    ...LOCKED.map((l) => el('div', {
-      class: 'nav-link nav-link-locked',
-      'aria-disabled': 'true',
-      title: 'Available in the full version',
-    }, [
-      el('span', { class: 'nav-icon', 'aria-hidden': 'true' }, [l.icon, lockBadge()]),
-      el('span', { class: 'nav-label' }, l.label),
-      el('span', { class: 'sr-only' }, ' (locked, full version only)'),
-    ])),
   ]);
 
   const content = el('div', { class: 'app-content stack', id: 'main', tabindex: '-1' }, [
