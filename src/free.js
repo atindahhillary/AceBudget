@@ -31,10 +31,24 @@ const catLabel = (id) => {
 };
 
 const SECTIONS = [
-  { id: 'summary',  label: 'Summary',     icon: '📊' },
-  { id: 'income',   label: 'Income',      icon: '💰' },
-  { id: 'expenses', label: 'Expenses',    icon: '🧾' },
-  { id: 'savings',  label: 'Savings goal', icon: '🎯' },
+  { id: 'summary',  label: 'Summary',      icon: '🏠' },
+  { id: 'income',   label: 'Income',       icon: '💰' },
+  { id: 'expenses', label: 'Expenses',     icon: '🧾' },
+  { id: 'savings',  label: 'Savings goal', icon: '🏦' },
+];
+
+/**
+ * Sections that exist only in the full app. Shown so people know they are
+ * there, but deliberately not usable here: each one only links to its own
+ * description card, never to the feature. Icons match the full app's nav.
+ */
+const LOCKED = [
+  { id: 'budget',        label: 'Budget',        icon: '📊', title: 'Monthly budget limits', text: 'Set a spending limit for each category and see a warning before you go over.' },
+  { id: 'goals',         label: 'Goals',         icon: '🎯', title: 'Several savings goals', text: 'Save for school fees, a trip and emergencies at once, each with its own target date.' },
+  { id: 'debt',          label: 'Debt',          icon: '💳', title: 'Debt payoff planner', text: 'See which loan to clear first and the month you will be debt-free.' },
+  { id: 'subscriptions', label: 'Subscriptions', icon: '🔁', title: 'Subscription tracker', text: 'Keep every monthly and yearly charge in one list and see what is due next.' },
+  { id: 'cashflow',      label: 'Cash Flow',     icon: '📈', title: 'Safe Days and cash flow', text: 'See how many days your savings would last, with 12 months of history.' },
+  { id: 'coach',         label: 'Coach',         icon: '🧭', title: 'Money coach', text: 'Plain tips from your own numbers, and answers to questions like "Can I afford this?"' },
 ];
 
 // --- state -------------------------------------------------------------------
@@ -122,6 +136,7 @@ function summarySection() {
       stat('Money remaining', money(left), tone),
     ]),
     el('p', { class: 'soft' }, note),
+    lockedHint('cashflow', 'See how many days your savings would last with Safe Days.'),
   ]);
 }
 
@@ -242,6 +257,7 @@ function expensesSection() {
   return el('section', { class: 'free-section stack', id: 'expenses', 'aria-labelledby': 'expenses-title' }, [
     ...sectionHead('expenses', 'Expenses', 'Track every expense, and the leaks stop hiding.'),
     form, list,
+    lockedHint('budget', 'Set a monthly limit for each category.'),
   ]);
 }
 
@@ -298,26 +314,37 @@ function savingsSection() {
   return el('section', { class: 'free-section stack', id: 'savings', 'aria-labelledby': 'savings-title' }, [
     ...sectionHead('savings', 'Savings goal', 'Save first. Spend what is left.'),
     form, progress,
+    lockedHint('goals', 'Save for several goals at once, each with a target date.'),
   ]);
 }
 
 // --- full version preview ---------------------------------------------------------
 
+const lockBadge = () => el('span', { class: 'lock-badge', 'aria-hidden': 'true' }, '🔒');
+
+/** One-line pointer from a free section to a related locked one. Links to its description only. */
+function lockedHint(id, text) {
+  return el('a', { class: 'locked-hint', href: `#locked-${id}` }, [lockBadge(), el('span', {}, `${text} `), el('strong', {}, 'Full version')]);
+}
+
 function fullVersionSection() {
-  return el('section', { class: 'free-section', id: 'full-version', 'aria-labelledby': 'full-version-title' }, [
-    el('div', { class: 'card stack' }, [
-      el('h3', { id: 'full-version-title' }, 'Want the full picture?'),
-      el('p', { class: 'soft' }, 'This free sample covers the basics. The full AceBudget adds tools for planning further ahead:'),
-      el('ul', { class: 'full-version-list' }, [
-        'Monthly budgets with limits per category',
-        'Safe Days: how long your savings would last',
-        'Several savings goals with target dates',
-        'Subscription tracking with upcoming charges',
-        'Month by month history and charts',
-        'Excel export and a household PIN lock',
-      ].map((t) => el('li', {}, t))),
-      el('div', {}, el('a', { class: 'btn btn-ghost', href: '../site/index.html' }, 'See everything in the full version')),
+  // :target is not re-applied to elements rebuilt after a hash change, so mark it ourselves.
+  const cards = LOCKED.map((l) => el('article', { class: `card locked-card${location.hash === `#locked-${l.id}` ? ' is-target' : ''}`, id: `locked-${l.id}`, 'aria-labelledby': `locked-${l.id}-title` }, [
+    el('div', { class: 'row-between' }, [
+      el('h3', { id: `locked-${l.id}-title`, class: 'locked-title' }, [el('span', { 'aria-hidden': 'true' }, l.icon), l.title]),
+      el('span', { class: 'pill' }, [lockBadge(), ' Locked']),
     ]),
+    el('p', { class: 'soft' }, l.text),
+    // A faded placeholder where the real tool would be: purely visual, no controls.
+    el('div', { class: 'locked-preview', 'aria-hidden': 'true' }, [el('span'), el('span'), el('span')]),
+  ]));
+
+  return el('section', { class: 'free-section stack', id: 'full-version', 'aria-labelledby': 'full-version-title' }, [
+    el('h2', { id: 'full-version-title' }, 'In the full version'),
+    el('p', { class: 'hook-caption' }, 'You have the basics. The full AceBudget helps you plan ahead.'),
+    el('p', { class: 'soft' }, 'These sections are part of the complete AceBudget and are locked in this free sample.'),
+    el('div', { class: 'grid locked-grid' }, cards),
+    el('div', {}, el('a', { class: 'btn btn-primary', href: '../site/index.html' }, 'See everything in the full version')),
   ]);
 }
 
@@ -334,7 +361,8 @@ function focusForm(id) {
 
 function currentSection() {
   const h = location.hash.slice(1);
-  return SECTIONS.some((s) => s.id === h) ? h : 'summary';
+  if (!h) return 'summary';
+  return SECTIONS.some((s) => s.id === h) ? h : null;
 }
 
 function render() {
@@ -363,7 +391,12 @@ function render() {
       class: `nav-link${s.id === active ? ' nav-link-active' : ''}`,
       'aria-current': s.id === active ? 'true' : null,
     }, [el('span', { class: 'nav-icon', 'aria-hidden': 'true' }, s.icon), el('span', { class: 'nav-label' }, s.label)])),
-    el('a', { href: '#full-version', class: 'nav-link' }, [el('span', { class: 'nav-icon', 'aria-hidden': 'true' }, '✨'), el('span', { class: 'nav-label' }, 'Full version')]),
+    el('div', { class: 'nav-divider', 'aria-hidden': 'true' }, 'Full version'),
+    ...LOCKED.map((l) => el('a', {
+      href: `#locked-${l.id}`,
+      class: 'nav-link nav-link-locked',
+      'aria-label': `${l.label}: locked, available in the full version`,
+    }, [el('span', { class: 'nav-icon', 'aria-hidden': 'true' }, [l.icon, lockBadge()]), el('span', { class: 'nav-label' }, l.label)])),
   ]);
 
   const content = el('div', { class: 'app-content stack', id: 'main', tabindex: '-1' }, [

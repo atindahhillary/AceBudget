@@ -27,6 +27,48 @@
 
 .form-actions { gap: var(--sp-2); flex-wrap: wrap; }
 
-.full-version-list { list-style: none; display: grid; gap: var(--sp-2); grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
-.full-version-list li { display: flex; gap: var(--sp-2); align-items: baseline; color: var(--text-soft); font-size: var(--fs-sm); }
-.full-version-list li::before { content: "\2713"; color: var(--ok); font-weight: 700; }
+/* --- locked (full version only) areas ---------------------------------------
+   Visible so people know the complete app has more, but visibly unavailable:
+   dimmed, dashed, a lock on each, and no controls inside. */
+.lock-badge { font-size: 0.8em; line-height: 1; }
+
+.nav-divider {
+  padding: var(--sp-4) 12px var(--sp-1);
+  font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--text-mute);
+}
+.nav-link-locked { color: var(--text-mute); }
+.nav-link-locked .nav-icon { position: relative; opacity: 0.55; }
+.nav-link-locked .nav-icon .lock-badge { position: absolute; right: -6px; bottom: -4px; font-size: 0.65em; opacity: 1; }
+.nav-link-locked:hover { color: var(--text-soft); }
+
+.locked-grid { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.locked-card {
+  scroll-margin-top: 80px;
+  background: var(--surface-2);
+  border-style: dashed;
+  box-shadow: none;
+}
+.locked-card:target, .locked-card.is-target { border-color: var(--brand-400); border-style: solid; box-shadow: var(--sh-focus); }
+.locked-title { display: flex; align-items: center; gap: var(--sp-2); font-size: var(--fs-md); color: var(--text-soft); }
+.locked-card .pill { flex: 0 0 auto; }
+.locked-card p { font-size: var(--fs-sm); margin-top: var(--sp-2); }
+
+/* Faded stand-in for the real tool. Decorative only. */
+.locked-preview { display: grid; gap: 6px; margin-top: var(--sp-4); opacity: 0.7; }
+.locked-preview span { height: 8px; border-radius: var(--r-full); background: var(--surface-3); }
+.locked-preview span:nth-child(1) { width: 90%; }
+.locked-preview span:nth-child(2) { width: 65%; }
+.locked-preview span:nth-child(3) { width: 40%; }
+
+.locked-hint {
+  display: inline-flex; align-items: center; gap: var(--sp-2);
+  font-size: var(--fs-sm); color: var(--text-mute); text-decoration: none;
+}
+.locked-hint strong { color: var(--brand-600); font-weight: 600; }
+.locked-hint:hover strong { text-decoration: underline; }
+:root[data-theme="dark"] .locked-hint strong { color: var(--brand-300); }
+
+@media (max-width: 720px) {
+  .nav-divider { display: none; }
+}
