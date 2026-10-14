@@ -2,7 +2,8 @@
  * store.js: the single source of truth.
  *
  * Design constraints that are not negotiable:
- *   1. Data never leaves the device. localStorage only, no network, no telemetry.
+ *   1. Local first. localStorage is the source of truth and nothing leaves the
+ *      device unless the user signs in; cloud sync lives in core/sync.js.
  *   2. Every write is atomic and versioned so an import can be rolled back.
  *   3. Subscribers re-render from state; nothing mutates the DOM from a handler.
  */
@@ -117,6 +118,8 @@ function notify() {
 export function update(recipe) {
   const draft = structuredClone(state);
   recipe(draft);
+  // Stamp every change so cloud sync can tell which copy is the newer one.
+  draft.updatedAt = new Date().toISOString();
   state = draft;
   persist();
   notify();

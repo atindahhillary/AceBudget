@@ -2,12 +2,12 @@
  * sw.js: minimal offline service worker (Gap G12: weight, bandwidth, access).
  *
  * Cache-first for the known app shell, network-first (falling back to cache)
- * for everything else same-origin. Cross-origin requests are never touched:
- * this app makes zero external network calls by design, and the service
- * worker enforces that at the network layer too.
+ * for everything else same-origin. Cross-origin requests are never touched or
+ * cached: the only ones the app ever makes are the optional Supabase sync
+ * calls for signed-in users, and those must always go straight to the network.
  */
 
-const CACHE_VERSION = 'acebudget-v1';
+const CACHE_VERSION = 'acebudget-v2';
 
 const APP_SHELL = [
   './',
@@ -24,6 +24,9 @@ const APP_SHELL = [
   './src/core/zip.js',
   './src/core/xlsx.js',
   './src/core/attachments.js',
+  './src/core/supabase.js',
+  './src/core/sync.js',
+  './src/ui/auth.js',
   './src/data/categories.js',
   './src/engine/analytics.js',
   './src/engine/coach.js',

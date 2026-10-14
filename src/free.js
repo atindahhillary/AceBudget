@@ -12,6 +12,9 @@ import { el } from './ui/render.js';
 import { CURRENCIES, fmt, num, r2, add, sub, ratio, clamp } from './core/money.js';
 import { CAT_MAP } from './data/categories.js';
 import { toastOk, toastError } from './ui/toast.js';
+import { consumeOAuthRedirect, isSignedIn } from './core/supabase.js';
+import { createSync } from './core/sync.js';
+import { accountPanel } from './ui/auth.js';
 
 const KEY = 'acebudget.free.v1';
 const FULL_APP_KEY = 'acebudget.state.v1'; // read only, for currency and theme defaults
@@ -35,6 +38,7 @@ const SECTIONS = [
   { id: 'income',   label: 'Income',       icon: '💰' },
   { id: 'expenses', label: 'Expenses',     icon: '🧾' },
   { id: 'savings',  label: 'Savings goal', icon: '🏦' },
+  { id: 'account',  label: 'Account',      icon: '👤' },
 ];
 
 /**
@@ -77,13 +81,48 @@ function load() {
 }
 
 function commit() {
+  // Stamp every change so cloud sync can tell which copy is the newer one.
+  state.updatedAt = new Date().toISOString();
   try {
     localStorage.setItem(KEY, JSON.stringify(state));
   } catch {
     toastError("Could not save: your device's storage may be full or private browsing may block it.");
   }
+  if (!applyingRemote) sync.schedulePush();
   render();
 }
+
+// --- optional cloud sync -------------------------------------------------------
+// Signing in is never required here. Signed out, nothing leaves the device.
+
+/** True while applying a copy pulled from the cloud, so we do not push it back. */
+let applyingRemote = false;
+/** Set once the first render has run, so sync status updates never draw too early. */
+let booted = false;
+
+const sync = createSync({
+  app: 'free',
+  readLocal: () => state,
+  writeLocal: (data) => {
+    applyingRemote = true;
+    try {
+      state = {
+        currency: CURRENCIES.some((c) => c.code === data.currency) ? data.currency : state.currency,
+        income: Array.isArray(data.income) ? data.income : [],
+        expenses: Array.isArray(data.expenses) ? data.expenses : [],
+        savings: { goal: num(data.savings && data.savings.goal), current: num(data.savings && data.savings.current) },
+        updatedAt: data.updatedAt,
+      };
+      try { localStorage.setItem(KEY, JSON.stringify(state)); } catch { /* quota: keep it in memory */ }
+    } finally {
+      applyingRemote = false;
+    }
+    render();
+  },
+  stampOf: (s) => s.updatedAt,
+  // Redraw so the account panel always shows the live sync state.
+  onStatus: () => { if (booted) render(); },
+});
 
 const uid = () => `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
 const money = (n) => fmt(n, state.currency, { decimals: 2 });
@@ -327,6 +366,14 @@ function lockedHint(text) {
   return el('p', { class: 'locked-hint' }, [lockBadge(), el('span', {}, `${text} `), el('strong', {}, 'Full version')]);
 }
 
+/** Optional account, for keeping this budget if the browser is cleared or the device changes. */
+function accountSection() {
+  return el('section', { class: 'free-section stack', id: 'account', 'aria-labelledby': 'account-title' }, [
+    ...sectionHead('account', 'Account', 'Optional. Keep your budget safe if you change phone or clear your browser.'),
+    accountPanel({ sync, rerender: render, compact: true }),
+  ]);
+}
+
 /** Read-only cards describing the locked sections. No links or controls inside. */
 function fullVersionSection() {
   const cards = LOCKED.map((l) => el('article', { class: 'card locked-card' }, [
@@ -401,8 +448,9 @@ function render() {
     incomeSection(),
     expensesSection(),
     savingsSection(),
+    accountSection(),
     fullVersionSection(),
-    el('p', { class: 'muted fs-xs center' }, 'Private by design: everything you type stays on this device. No account, no bank password.'),
+    el('p', { class: 'muted fs-xs center' }, 'Private by design: everything you type stays on this device unless you sign in to sync it. No bank password, ever.'),
   ]);
 
   const scrollY = window.scrollY;
@@ -415,7 +463,13 @@ window.addEventListener('storage', (e) => {
   // Keep two open tabs of the free sample in step with each other.
   if (e.key === KEY) { state = load(); render(); }
 });
+const oauth = consumeOAuthRedirect();
+if (oauth.error) toastError(`Google sign-in failed: ${oauth.error}`);
+else if (oauth.signedIn) toastOk('Signed in with Google.');
+
 render();
+booted = true;
+if (isSignedIn()) sync.syncNow({ silent: true });
 
 // The browser tries to jump to a #section before it exists, so do it once rendered.
 if (location.hash) document.getElementById(location.hash.slice(1))?.scrollIntoView();

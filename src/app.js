@@ -27,6 +27,9 @@ import { simulatePayoff, compareStrategies } from './engine/debtPlan.js';
 import { shockTest } from './engine/shock.js';
 import { el, sparkline, barRow, fmtDelta, runwayGauge, interactiveLineChart, interactiveDonut } from './ui/render.js';
 import { toastOk, toastWarn, toastError } from './ui/toast.js';
+import { consumeOAuthRedirect, isSignedIn } from './core/supabase.js';
+import { createSync } from './core/sync.js';
+import { accountPanel } from './ui/auth.js';
 
 // --- module state ------------------------------------------------------
 
@@ -39,14 +42,40 @@ let unlocked = false; // app-lock PIN gate, reset every fresh load by design
 
 const mount = document.getElementById('app');
 
+// --- cloud sync (optional, only once signed in) --------------------------------
+
+/** True while we are writing a copy pulled from the cloud, so we do not push it straight back. */
+let applyingRemote = false;
+/** Set once the first render has run, so sync status updates never draw too early. */
+let booted = false;
+
+const sync = createSync({
+  app: 'full',
+  readLocal: () => getState(),
+  writeLocal: (data) => {
+    applyingRemote = true;
+    try { importJSON(JSON.stringify(data)); } finally { applyingRemote = false; }
+  },
+  stampOf: (state) => state.updatedAt,
+  // Redraw so the account panel always shows the live sync state.
+  onStatus: () => { if (booted) render(); },
+});
+
 function boot() {
+  const oauth = consumeOAuthRedirect();
+  if (oauth.error) toastError(`Google sign-in failed: ${oauth.error}`);
+  else if (oauth.signedIn) toastOk('Signed in with Google.');
+
+  subscribe(() => { if (!applyingRemote) sync.schedulePush(); });
   subscribe(render);
   window.addEventListener('hashchange', render);
   document.addEventListener('acebudget:save-failed', () => {
     toastError("Could not save: your device's storage may be full or private browsing may block it.");
   });
   render();
+  booted = true;
   registerServiceWorker();
+  if (isSignedIn()) sync.syncNow({ silent: true });
 }
 
 function registerServiceWorker() {
@@ -171,10 +200,10 @@ function buildOnboarding(state) {
       dependants,
       onboarded: true,
     });
-    toastOk(`Welcome, ${household}. Your data stays on this device.`);
+    toastOk(`Welcome, ${household}. Your budget stays on this device.`);
   } }, [
     el('h1', {}, 'Set up AceBudget'),
-    el('p', { class: 'soft' }, "60 seconds, no account, nothing leaves this device. Every other budgeting app asks for a bank password. This one just asks a few questions."),
+    el('p', { class: 'soft' }, "60 seconds, no account needed, nothing leaves this device unless you sign in to sync. Every other budgeting app asks for a bank password. This one just asks a few questions."),
     nameField.wrap, currencyField.wrap, incomeTypeField.wrap, dependantsField.wrap,
     errBox,
     el('button', { class: 'btn btn-primary btn-block btn-lg', type: 'submit' }, 'Start budgeting'),
@@ -1185,6 +1214,7 @@ function renderSettings(container, state, snap) {
   container.replaceChildren(el('div', { class: 'stack' }, [
     el('h2', {}, 'Settings'),
     el('p', { class: 'hook-caption' }, 'Your data, your device, your rules. Nothing leaves without your say.'),
+    accountPanel({ sync, rerender: render }),
     el('div', { class: 'card stack' }, [themeToggle]),
     pwaCard,
     buildLockSettingsCard(state),

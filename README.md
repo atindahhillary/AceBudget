@@ -1,8 +1,8 @@
 # AceBudget
 
-A free, local-first household budgeting web app. No account, no bank password, no server: every number you enter stays in your browser's local storage on your own device.
+A free, local-first household budgeting web app. No bank password, ever. Every number you enter stays in your browser on your own device, and is only copied to the cloud if you choose to create an account.
 
-> **Every other budgeting app asks for your bank password. This one never asks for your name.**
+> **Every other budgeting app asks for your bank password. This one never does.**
 
 ### 🔗 [**Open AceBudget in your browser →**](https://atindahhillary.github.io/AceBudget/)
 
@@ -30,7 +30,7 @@ See the full research behind these decisions in [`docs/GAP-ANALYSIS.md`](docs/GA
 | G2: The monthly-salary assumption | Income Volatility Score and a smoothed "safe monthly draw" for lumpy/irregular earners |
 | G3: Cash and mobile money are second-class | Cash / mobile money / bank / card as first-class payment methods on every transaction |
 | G4: Inflation and FX blindness | A real-terms toggle that shows savings and goal values adjusted for inflation |
-| G5: Trust and the credential wall | Local-first architecture: no account, no server, no telemetry, no third-party network calls |
+| G5: Trust and the credential wall | Local-first architecture: no bank credentials, no telemetry. Works with no account at all; an optional sign-in adds cloud backup |
 | G6: Debt strategy is opaque | Avalanche/snowball payoff simulator with payoff dates and an honest interest-saved comparison |
 | G7: Subscription leakage | Renewal Radar: annualised cost, next-charge countdown, and dormancy flags |
 | G8: Data without counsel | A coach engine that ranks quantified, household-specific insights, plus deterministic Q&A |

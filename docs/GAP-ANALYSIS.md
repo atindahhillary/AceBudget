@@ -141,7 +141,7 @@ Each gap maps to a specific, shippable mechanism.
 | G2 lumpy income | Income Volatility Score + smoothed "safe monthly draw" from trailing receipts |
 | G3 rails | Cash / mobile money / bank / card as first-class methods on every transaction |
 | G4 inflation | Inflation lens: nominal vs real toggle across budget, savings and goals |
-| G5 trust | Local-first. No account, no server, no telemetry, no third-party network calls |
+| G5 trust | Local-first. No bank credentials, no telemetry. Fully usable with no account; sign-in for cloud backup is opt-in |
 | G6 debt | Avalanche/snowball simulator with payoff dates and interest-saved delta |
 | G7 leakage | Renewal Radar: annualised cost, next-charge countdown, dormancy flags |
 | G8 counsel | Coach engine: ranked, quantified, household-specific actions plus Q&A |
@@ -171,7 +171,7 @@ Runway is the outcome.
 
 ## 6. Positioning
 
-> **Every other budgeting app asks for your bank password. This one never asks for your name.**
+> **Every other budgeting app asks for your bank password. This one never does.**
 
 The wedge is not the feature list; that has been stable since the first desktop ledgers. The
 wedge is the **combination**: an opinionated coaching engine running over a private, local,
