@@ -2,9 +2,8 @@
  * sync.js: local-first cloud sync, shared by the full app and the free sample.
  *
  * The device stays the source of truth. Everything is written to localStorage
- * first and the app keeps working with no network and no account. When someone
- * signs in, this mirrors that local copy to Supabase and pulls it back on
- * other devices.
+ * first, so the app keeps working with no network once someone is signed in.
+ * This mirrors that local copy to Supabase and pulls it back on other devices.
  *
  * Conflicts are settled by "newest wins" on a timestamp stamped at save time.
  * That is the honest limit of this design: if the same household edits on two

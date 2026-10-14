@@ -54,15 +54,24 @@ To enable it:
    Client ID and Client Secret.
 4. In `src/core/supabase.js`, change `GOOGLE_ENABLED` to `true` and redeploy.
 
-### 3. Decide about the confirmation email
+### 3. Fix the signup email before launch (blocking)
 
-Email confirmation is currently **on**, so a new account has to click a link
-before it can sign in. That is the safer default. If you would rather let people
-in straight away, turn it off in **Authentication > Providers > Email**. The app
-handles both: it shows "check your email" when confirmation is required.
+Signing in is now **required** in both apps, so every single user has to get
+through this step. Two things make that fragile right now:
 
-Supabase's built-in email sender is rate limited and only really meant for
-testing. For real users, connect your own SMTP under **Authentication > Emails**.
+- Email confirmation is **on**, so a new account must click a link first.
+- Supabase's built-in sender is rate limited to a handful of emails per hour.
+  Testing hit `email rate limit exceeded` after only two signups.
+
+So as it stands, a burst of real signups will fail. Pick one before launch:
+
+- **Connect your own SMTP** under **Authentication > Emails** (recommended, and
+  needed for real volume either way), or
+- **Turn confirmation off** under **Authentication > Providers > Email**, which
+  lets people in immediately at the cost of unverified addresses.
+
+The app handles both: it shows "check your email" when confirmation is on, and
+surfaces the rate-limit message rather than failing silently.
 
 ## How syncing behaves
 

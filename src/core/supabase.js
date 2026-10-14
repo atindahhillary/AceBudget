@@ -176,15 +176,22 @@ export async function signOut() {
   try { await authFetch('/logout', {}, { token }); } catch { /* local sign out already done */ }
 }
 
-/** Swap an expiring access token for a fresh one. */
+/**
+ * Swap an expiring access token for a fresh one.
+ *
+ * Only a refusal from the server clears the session. A failure to reach the
+ * server at all (offline, flaky signal) must not sign anyone out, or a user on
+ * a bad connection would lose access to their own budget.
+ */
 async function refresh() {
   if (!session || !session.refresh_token) return false;
   try {
     const payload = await authFetch('/token?grant_type=refresh_token', { refresh_token: session.refresh_token });
     saveSession(toSession(payload));
     return true;
-  } catch {
-    saveSession(null); // refresh token is dead: force a fresh sign in
+  } catch (err) {
+    if (err instanceof TypeError) return false; // network error: keep the session
+    saveSession(null);                          // the token itself was rejected
     return false;
   }
 }

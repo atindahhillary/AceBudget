@@ -15,6 +15,28 @@ import {
 const STATUS_TONE = { synced: 'pill-ok', syncing: 'pill-info', error: 'pill-bad', offline: 'pill', idle: 'pill-info' };
 
 /**
+ * The full-screen sign-in gate. Both apps show this until someone is signed in.
+ *
+ * An existing session is enough to get in, so the app still opens offline;
+ * only a token the server actively rejects sends someone back here.
+ *
+ * @param {object} opts
+ * @param {Function} opts.rerender  redraw the host app once signed in
+ * @param {string} [opts.title]
+ * @param {string} [opts.subtitle]
+ * @returns {HTMLElement}
+ */
+export function authGate({ rerender, title = 'Sign in to AceBudget', subtitle = 'Your budget is saved to your account, so you can open it on any device.' }) {
+  return el('div', { class: 'onboard-body' }, [
+    el('div', { class: 'wrap onboard-wrap stack' }, [
+      el('h1', {}, title),
+      el('p', { class: 'soft' }, subtitle),
+      accountPanel({ sync: null, rerender, gate: true }),
+    ]),
+  ]);
+}
+
+/**
  * Build the account panel.
  * @param {object} opts
  * @param {object} opts.sync       the sync handle from createSync()
@@ -22,8 +44,8 @@ const STATUS_TONE = { synced: 'pill-ok', syncing: 'pill-info', error: 'pill-bad'
  * @param {boolean} [opts.compact] tighter copy for the free sample
  * @returns {HTMLElement}
  */
-export function accountPanel({ sync, rerender, compact = false }) {
-  return isSignedIn() ? signedInPanel({ sync, rerender }) : signedOutPanel({ sync, rerender, compact });
+export function accountPanel({ sync, rerender, compact = false, gate = false }) {
+  return isSignedIn() ? signedInPanel({ sync, rerender }) : signedOutPanel({ sync, rerender, compact, gate });
 }
 
 const STATUS_LABEL = {
@@ -75,7 +97,7 @@ function signedInPanel({ sync, rerender }) {
   ]);
 }
 
-function signedOutPanel({ sync, rerender, compact }) {
+function signedOutPanel({ sync, rerender, compact, gate = false }) {
   let mode = 'in'; // 'in' or 'up'
   const err = el('div', { class: 'field-error', role: 'alert' });
   const note = el('p', { class: 'muted fs-xs' });
@@ -138,12 +160,14 @@ function signedOutPanel({ sync, rerender, compact }) {
 
   return el('div', { class: 'card stack' }, [
     el('div', { class: 'row-between' }, [
-      el('h3', {}, compact ? 'Save your budget' : 'Sign in to back up your budget'),
-      statusPill(sync),
+      el('h3', {}, gate ? 'Sign in or create an account' : compact ? 'Save your budget' : 'Sign in to back up your budget'),
+      gate ? null : statusPill(sync),
     ]),
-    el('p', { class: 'soft' }, compact
-      ? 'Optional. Create a free account to keep this budget if you change device or clear your browser.'
-      : 'Optional. Without an account everything stays on this device. Sign in and your budget is also saved to your account, so you can open it on another device.'),
+    el('p', { class: 'soft' }, gate
+      ? 'Your budget is saved to your account and kept on this device too, so it keeps working offline once you are in.'
+      : compact
+        ? 'Create a free account to keep this budget if you change device or clear your browser.'
+        : 'Sign in and your budget is saved to your account as well as this device, so you can open it anywhere.'),
     googleBtn,
     googleBtn ? el('p', { class: 'muted fs-xs center' }, 'or use email') : null,
     form,

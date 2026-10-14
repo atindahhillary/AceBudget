@@ -141,7 +141,7 @@ Each gap maps to a specific, shippable mechanism.
 | G2 lumpy income | Income Volatility Score + smoothed "safe monthly draw" from trailing receipts |
 | G3 rails | Cash / mobile money / bank / card as first-class methods on every transaction |
 | G4 inflation | Inflation lens: nominal vs real toggle across budget, savings and goals |
-| G5 trust | Local-first. No bank credentials, no telemetry. Fully usable with no account; sign-in for cloud backup is opt-in |
+| G5 trust | No bank credentials, ever, and no telemetry. A free account holds your own rows only; the device keeps a working copy so the app runs offline |
 | G6 debt | Avalanche/snowball simulator with payoff dates and interest-saved delta |
 | G7 leakage | Renewal Radar: annualised cost, next-charge countdown, dormancy flags |
 | G8 counsel | Coach engine: ranked, quantified, household-specific actions plus Q&A |

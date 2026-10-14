@@ -29,7 +29,7 @@ import { el, sparkline, barRow, fmtDelta, runwayGauge, interactiveLineChart, int
 import { toastOk, toastWarn, toastError } from './ui/toast.js';
 import { consumeOAuthRedirect, isSignedIn } from './core/supabase.js';
 import { createSync } from './core/sync.js';
-import { accountPanel } from './ui/auth.js';
+import { accountPanel, authGate } from './ui/auth.js';
 
 // --- module state ------------------------------------------------------
 
@@ -88,6 +88,16 @@ function registerServiceWorker() {
 function render() {
   const state = getState();
   document.documentElement.setAttribute('data-theme', state.settings.theme === 'dark' ? 'dark' : 'light');
+  // Everyone signs in first. An existing session counts, so the app still
+  // opens offline; the PIN lock stays as a second, device-local layer.
+  if (!isSignedIn()) {
+    mount.replaceChildren(el('div', { class: 'onboard-screen' }, [
+      brandBanner(),
+      authGate({ rerender: render }),
+    ]));
+    return;
+  }
+
   const locked = state.profile.onboarded && state.settings.lockEnabled && state.settings.pinHash && !unlocked;
   mount.replaceChildren(
     locked ? buildLockScreen(state) : state.profile.onboarded ? buildShell(state) : buildOnboarding(state)
@@ -203,7 +213,7 @@ function buildOnboarding(state) {
     toastOk(`Welcome, ${household}. Your budget stays on this device.`);
   } }, [
     el('h1', {}, 'Set up AceBudget'),
-    el('p', { class: 'soft' }, "60 seconds, no account needed, nothing leaves this device unless you sign in to sync. Every other budgeting app asks for a bank password. This one just asks a few questions."),
+    el('p', { class: 'soft' }, "60 seconds. Every other budgeting app asks for a bank password. This one just asks a few questions."),
     nameField.wrap, currencyField.wrap, incomeTypeField.wrap, dependantsField.wrap,
     errBox,
     el('button', { class: 'btn btn-primary btn-block btn-lg', type: 'submit' }, 'Start budgeting'),

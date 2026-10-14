@@ -14,7 +14,7 @@ import { CAT_MAP } from './data/categories.js';
 import { toastOk, toastError } from './ui/toast.js';
 import { consumeOAuthRedirect, isSignedIn } from './core/supabase.js';
 import { createSync } from './core/sync.js';
-import { accountPanel } from './ui/auth.js';
+import { accountPanel, authGate } from './ui/auth.js';
 
 const KEY = 'acebudget.free.v1';
 const FULL_APP_KEY = 'acebudget.state.v1'; // read only, for currency and theme defaults
@@ -412,6 +412,19 @@ function currentSection() {
 function render() {
   const full = readFullApp();
   document.documentElement.setAttribute('data-theme', full.settings && full.settings.theme === 'dark' ? 'dark' : 'light');
+
+  // Everyone signs in first. An existing session counts, so it still opens offline.
+  if (!isSignedIn()) {
+    document.getElementById('app').replaceChildren(el('div', { class: 'onboard-screen' }, [
+      authGate({
+        rerender: render,
+        title: 'Sign in to AceBudget Free',
+        subtitle: 'A simple family budget: income, expenses, what is left, and one savings goal.',
+      }),
+    ]));
+    return;
+  }
+
   const active = currentSection();
 
   const currency = el('select', { id: 'free-currency', 'aria-label': 'Currency', onchange: (e) => {
@@ -450,7 +463,7 @@ function render() {
     savingsSection(),
     accountSection(),
     fullVersionSection(),
-    el('p', { class: 'muted fs-xs center' }, 'Private by design: everything you type stays on this device unless you sign in to sync it. No bank password, ever.'),
+    el('p', { class: 'muted fs-xs center' }, 'Private by design: everything you type is kept on this device and in your own account, where only you can read it. No bank password, ever.'),
   ]);
 
   const scrollY = window.scrollY;
