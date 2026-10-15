@@ -64,6 +64,17 @@ function toSession(payload) {
   };
 }
 
+// A password-reset link signs the user in, but they still need to choose a new
+// password. This flag (kept for the tab, so a reload does not lose it) makes the
+// app show the "set a new password" screen before anything else.
+const RECOVERY_KEY = 'acebudget-recovery';
+function setRecovery(on) {
+  try { on ? sessionStorage.setItem(RECOVERY_KEY, '1') : sessionStorage.removeItem(RECOVERY_KEY); } catch { /* best effort */ }
+}
+export const needsNewPassword = () => {
+  try { return isSignedIn() && sessionStorage.getItem(RECOVERY_KEY) === '1'; } catch { return false; }
+};
+
 export const getSession = () => session;
 export const isSignedIn = () => !!(session && session.access_token);
 export const currentUser = () => (session && session.user) || null;
@@ -100,9 +111,11 @@ async function authFetch(path, body, { method = 'POST', token } = {}) {
  * case no session comes back and the user has to click the link first.
  * @returns {Promise<{ok:boolean, needsConfirmation?:boolean, error?:string}>}
  */
-export async function signUp(email, password) {
+export async function signUp(email, password, redirectTo = location.href.split('#')[0].split('?')[0]) {
   try {
-    const payload = await authFetch('/signup', { email, password });
+    // Without redirect_to, Supabase sends the confirmation link to its configured
+    // Site URL, which is how links ended up pointing at localhost.
+    const payload = await authFetch(`/signup?redirect_to=${encodeURIComponent(redirectTo)}`, { email, password });
     const next = toSession(payload);
     if (next) {
       saveSession(next);
@@ -118,6 +131,17 @@ export async function signIn(email, password) {
   try {
     const payload = await authFetch('/token?grant_type=password', { email, password });
     saveSession(toSession(payload));
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
+/** Set a new password for the signed-in user (used after a reset link). */
+export async function updatePassword(password) {
+  try {
+    await authFetch('/user', { password }, { method: 'PUT', token: session && session.access_token });
+    setRecovery(false);
     return { ok: true };
   } catch (err) {
     return { ok: false, error: err.message };
@@ -166,10 +190,12 @@ export function consumeOAuthRedirect() {
   clean();
   if (!next) return { signedIn: false };
   saveSession(next);
-  return { signedIn: true };
+  if (params.get('type') === 'recovery') setRecovery(true);
+  return { signedIn: true, recovery: params.get('type') === 'recovery' };
 }
 
 export async function signOut() {
+  setRecovery(false);
   const token = session && session.access_token;
   saveSession(null);
   if (!token) return;

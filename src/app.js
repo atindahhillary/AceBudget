@@ -27,9 +27,9 @@ import { simulatePayoff, compareStrategies } from './engine/debtPlan.js';
 import { shockTest } from './engine/shock.js';
 import { el, sparkline, barRow, fmtDelta, runwayGauge, interactiveLineChart, interactiveDonut } from './ui/render.js';
 import { toastOk, toastWarn, toastError } from './ui/toast.js';
-import { consumeOAuthRedirect, isSignedIn } from './core/supabase.js';
+import { consumeOAuthRedirect, isSignedIn, needsNewPassword } from './core/supabase.js';
 import { createSync } from './core/sync.js';
-import { accountPanel, authGate } from './ui/auth.js';
+import { accountPanel, authGate, newPasswordGate } from './ui/auth.js';
 import { passwordInput } from './ui/password.js';
 
 // --- module state ------------------------------------------------------
@@ -91,6 +91,10 @@ function render() {
   document.documentElement.setAttribute('data-theme', state.settings.theme === 'dark' ? 'dark' : 'light');
   // Everyone signs in first. An existing session counts, so the app still
   // opens offline; the PIN lock stays as a second, device-local layer.
+  if (needsNewPassword()) {
+    mount.replaceChildren(el('div', { class: 'onboard-screen' }, [brandBanner(), newPasswordGate({ rerender: render })]));
+    return;
+  }
   if (!isSignedIn()) {
     mount.replaceChildren(el('div', { class: 'onboard-screen' }, [
       brandBanner(),

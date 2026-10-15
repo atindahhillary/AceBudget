@@ -10,7 +10,7 @@ import { passwordInput } from './password.js';
 import { toastOk, toastError } from './toast.js';
 import {
   GOOGLE_ENABLED, isSignedIn, currentUser,
-  signIn, signUp, signOut, signInWithGoogle, resetPassword,
+  signIn, signUp, signOut, signInWithGoogle, resetPassword, updatePassword,
 } from '../core/supabase.js';
 
 const STATUS_TONE = { synced: 'pill-ok', syncing: 'pill-info', error: 'pill-bad', offline: 'pill', idle: 'pill-info' };
@@ -33,6 +33,46 @@ export function authGate({ rerender, title = 'Sign in to AceBudget', subtitle = 
       el('h1', {}, title),
       el('p', { class: 'soft' }, subtitle),
       accountPanel({ sync: null, rerender, gate: true }),
+    ]),
+  ]);
+}
+
+/**
+ * Shown after someone opens a password-reset link: they are signed in, but must
+ * choose a new password before the app opens.
+ */
+export function newPasswordGate({ rerender }) {
+  const err = el('div', { class: 'field-error', role: 'alert' });
+  const mk = (label, id) => {
+    const input = el('input', { type: 'password', id, name: id, autocomplete: 'new-password' });
+    return { input, wrap: el('div', { class: 'field' }, [el('label', { for: id }, label), passwordInput(input)]) };
+  };
+  const pw = mk('New password', 'new-password');
+  const again = mk('Confirm new password', 'new-password-confirm');
+  const btn = el('button', { class: 'btn btn-primary', type: 'submit' }, 'Save password');
+
+  const form = el('form', { class: 'stack', onsubmit: async (e) => {
+    e.preventDefault();
+    err.textContent = '';
+    if (pw.input.value.length < 6) { err.textContent = 'Password must be at least 6 characters.'; return; }
+    if (pw.input.value !== again.input.value) { err.textContent = 'The two passwords do not match.'; return; }
+    btn.disabled = true;
+    const result = await updatePassword(pw.input.value);
+    btn.disabled = false;
+    if (!result.ok) { err.textContent = result.error || 'Could not save the password.'; return; }
+    toastOk('Password saved. You are signed in.');
+    rerender();
+  } }, [
+    el('div', { class: 'form-row' }, [pw.wrap, again.wrap]),
+    err,
+    el('div', { class: 'row form-actions' }, [btn]),
+  ]);
+
+  return el('div', { class: 'onboard-body' }, [
+    el('div', { class: 'wrap onboard-wrap stack' }, [
+      el('h1', {}, 'Set your password'),
+      el('p', { class: 'soft' }, 'Choose a password for your AceBudget account. You will use it to sign in from now on.'),
+      el('div', { class: 'card stack' }, [form]),
     ]),
   ]);
 }

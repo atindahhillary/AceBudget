@@ -12,9 +12,9 @@ import { el } from './ui/render.js';
 import { CURRENCIES, fmt, num, r2, add, sub, ratio, clamp } from './core/money.js';
 import { CAT_MAP } from './data/categories.js';
 import { toastOk, toastError } from './ui/toast.js';
-import { consumeOAuthRedirect, isSignedIn } from './core/supabase.js';
+import { consumeOAuthRedirect, isSignedIn, needsNewPassword } from './core/supabase.js';
 import { createSync } from './core/sync.js';
-import { accountPanel, authGate } from './ui/auth.js';
+import { accountPanel, authGate, newPasswordGate } from './ui/auth.js';
 
 const KEY = 'acebudget.free.v1';
 const FULL_APP_KEY = 'acebudget.state.v1'; // read only, for currency and theme defaults
@@ -414,6 +414,10 @@ function render() {
   document.documentElement.setAttribute('data-theme', full.settings && full.settings.theme === 'dark' ? 'dark' : 'light');
 
   // Everyone signs in first. An existing session counts, so it still opens offline.
+  if (needsNewPassword()) {
+    document.getElementById('app').replaceChildren(el('div', { class: 'onboard-screen' }, [newPasswordGate({ rerender: render })]));
+    return;
+  }
   if (!isSignedIn()) {
     document.getElementById('app').replaceChildren(el('div', { class: 'onboard-screen' }, [
       authGate({

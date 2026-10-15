@@ -7,7 +7,7 @@
  * calls for signed-in users, and those must always go straight to the network.
  */
 
-const CACHE_VERSION = 'acebudget-v3';
+const CACHE_VERSION = 'acebudget-v4';
 
 const APP_SHELL = [
   './',
