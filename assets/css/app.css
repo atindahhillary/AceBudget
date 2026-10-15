@@ -17,6 +17,7 @@
 .fs-lg { font-size: var(--fs-lg); }
 .text-bad { color: var(--bad); }
 .field-error { color: var(--bad); font-size: var(--fs-xs); min-height: 1.2em; }
+.form-actions { flex-wrap: wrap; }
 .plain-list { list-style: none; }
 .plain-list li { padding: var(--sp-2) 0; border-bottom: 1px solid var(--line-soft); }
 .plain-list li:last-child { border-bottom: none; }
@@ -38,6 +39,13 @@
   position: sticky; top: 0; z-index: 20;
 }
 .brand-mark { font-size: 1.2em; }
+/* Keep the top bar on one line: badges and buttons never wrap, the household
+   name shortens with an ellipsis and steps aside on the narrowest phones. */
+.app-topbar { gap: var(--sp-2); }
+.app-topbar > .row:first-child { min-width: 0; }
+.app-topbar .pill, .app-topbar .btn, .app-topbar select { white-space: nowrap; flex-shrink: 0; }
+.topbar-household { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 420px) { .topbar-household { display: none; } }
 
 .app-nav {
   grid-area: nav;

@@ -7,7 +7,7 @@
  * calls for signed-in users, and those must always go straight to the network.
  */
 
-const CACHE_VERSION = 'acebudget-v6';
+const CACHE_VERSION = 'acebudget-v7';
 
 const APP_SHELL = [
   './',
@@ -29,6 +29,7 @@ const APP_SHELL = [
   './src/ui/auth.js',
   './src/ui/password.js',
   './src/data/categories.js',
+  './src/data/countries.js',
   './src/engine/analytics.js',
   './src/engine/coach.js',
   './src/engine/debtPlan.js',

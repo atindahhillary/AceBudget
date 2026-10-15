@@ -109,13 +109,17 @@ async function authFetch(path, body, { method = 'POST', token } = {}) {
 /**
  * Create an account. Supabase sends a confirmation email by default, in which
  * case no session comes back and the user has to click the link first.
+ * @param {string} email
+ * @param {string} password
+ * @param {{full_name?:string, phone?:string}} [details]  saved with the account;
+ *   a database trigger copies them into the user's acebudget_profiles row
  * @returns {Promise<{ok:boolean, needsConfirmation?:boolean, error?:string}>}
  */
-export async function signUp(email, password, redirectTo = location.href.split('#')[0].split('?')[0]) {
+export async function signUp(email, password, details = {}, redirectTo = location.href.split('#')[0].split('?')[0]) {
   try {
     // Without redirect_to, Supabase sends the confirmation link to its configured
     // Site URL, which is how links ended up pointing at localhost.
-    const payload = await authFetch(`/signup?redirect_to=${encodeURIComponent(redirectTo)}`, { email, password });
+    const payload = await authFetch(`/signup?redirect_to=${encodeURIComponent(redirectTo)}`, { email, password, data: details });
     const next = toSession(payload);
     if (next) {
       saveSession(next);

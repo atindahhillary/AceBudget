@@ -232,9 +232,13 @@ h1, h2, h3 { text-wrap: balance; }
 .field { display: flex; flex-direction: column; gap: 6px; }
 .field > label { font-size: var(--fs-sm); font-weight: 600; color: var(--text-soft); }
 .field .hint { font-size: var(--fs-xs); color: var(--text-mute); }
+.field[hidden] { display: none; }
+/* Phone number: country code picker beside the number, stacked on narrow screens. */
+.phone-row { display: grid; grid-template-columns: minmax(0, 13rem) minmax(0, 1fr); gap: var(--sp-2); }
+@media (max-width: 420px) { .phone-row { grid-template-columns: 1fr; } }
 
 input[type="text"], input[type="number"], input[type="date"], input[type="month"],
-input[type="search"], input[type="email"], input[type="password"], select, textarea {
+input[type="search"], input[type="email"], input[type="password"], input[type="tel"], select, textarea {
   width: 100%; padding: 10px 12px; border: 1px solid var(--line);
   border-radius: var(--r-md); background: var(--surface); color: var(--text);
   transition: border-color .15s var(--ease), box-shadow .15s var(--ease);

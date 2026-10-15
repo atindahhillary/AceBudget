@@ -12,6 +12,7 @@ import {
   GOOGLE_ENABLED, isSignedIn, currentUser,
   signIn, signUp, signOut, signInWithGoogle, resetPassword, updatePassword,
 } from '../core/supabase.js';
+import { COUNTRIES, guessCountry } from '../data/countries.js';
 
 const STATUS_TONE = { synced: 'pill-ok', syncing: 'pill-info', error: 'pill-bad', offline: 'pill', idle: 'pill-info' };
 
@@ -143,8 +144,13 @@ function signedOutPanel({ sync, rerender, compact, gate = false }) {
   const err = el('div', { class: 'field-error', role: 'alert' });
   const note = el('p', { class: 'muted fs-xs' });
 
+  const nameF = field('Full name', 'auth-name', 'text', 'name');
   const emailF = field('Email', 'auth-email', 'email');
   const passF = field('Password', 'auth-password', 'password');
+  const phoneF = phoneField();
+  // Only asked for when creating an account.
+  const signUpOnly = [nameF.wrap, phoneF.wrap];
+  signUpOnly.forEach((w) => { w.hidden = true; });
 
   const submitBtn = el('button', { class: 'btn btn-primary', type: 'submit' }, 'Sign in');
   const switchBtn = el('button', { class: 'btn btn-quiet btn-sm', type: 'button' }, 'New here? Create an account');
@@ -153,6 +159,8 @@ function signedOutPanel({ sync, rerender, compact, gate = false }) {
     mode = mode === 'in' ? 'up' : 'in';
     submitBtn.textContent = mode === 'in' ? 'Sign in' : 'Create account';
     switchBtn.textContent = mode === 'in' ? 'New here? Create an account' : 'Already have an account? Sign in';
+    signUpOnly.forEach((w) => { w.hidden = mode === 'in'; });
+    passF.input.autocomplete = mode === 'in' ? 'current-password' : 'new-password';
     err.textContent = '';
     note.textContent = '';
   });
@@ -163,11 +171,20 @@ function signedOutPanel({ sync, rerender, compact, gate = false }) {
     const password = passF.input.value;
     err.textContent = '';
     note.textContent = '';
+
+    let details;
+    if (mode === 'up') {
+      const fullName = nameF.input.value.trim().replace(/\s+/g, ' ');
+      if (fullName.length < 2) { err.textContent = 'Enter your full name.'; return; }
+      const phone = phoneF.value();
+      if (phone.error) { err.textContent = phone.error; return; }
+      details = { full_name: fullName, ...(phone.number ? { phone: phone.number } : {}) };
+    }
     if (!email) { err.textContent = 'Enter your email.'; return; }
     if (password.length < 6) { err.textContent = 'Password must be at least 6 characters.'; return; }
 
     submitBtn.disabled = true;
-    const result = mode === 'in' ? await signIn(email, password) : await signUp(email, password);
+    const result = mode === 'in' ? await signIn(email, password) : await signUp(email, password, details);
     submitBtn.disabled = false;
 
     if (!result.ok) { err.textContent = result.error || 'That did not work.'; return; }
@@ -180,7 +197,9 @@ function signedOutPanel({ sync, rerender, compact, gate = false }) {
       : 'Signed in. Your budget will be backed up to your account.');
     rerender();
   } }, [
+    nameF.wrap,
     el('div', { class: 'form-row' }, [emailF.wrap, passF.wrap]),
+    phoneF.wrap,
     err,
     el('div', { class: 'row form-actions' }, [submitBtn, switchBtn]),
     note,
@@ -218,8 +237,66 @@ function signedOutPanel({ sync, rerender, compact, gate = false }) {
   ]);
 }
 
-function field(label, id, type) {
-  const input = el('input', { type, id, name: id, autocomplete: type === 'password' ? 'current-password' : 'email' });
+function field(label, id, type, autocomplete = type === 'password' ? 'current-password' : 'email') {
+  const input = el('input', { type, id, name: id, autocomplete });
   const control = type === 'password' ? passwordInput(input) : input;
   return { input, wrap: el('div', { class: 'field' }, [el('label', { for: id }, label), control]) };
+}
+
+/**
+ * The optional phone number: a country code picker beside the number.
+ * `value()` returns the number in international form (+254712345678), nothing
+ * when the box is empty, or an error to show.
+ */
+function phoneField() {
+  const guess = guessCountry();
+  const country = el('select', { id: 'auth-country', name: 'auth-country', 'aria-label': 'Country code', autocomplete: 'tel-country-code' }, [
+    el('option', { value: '' }, 'Country code'),
+    ...COUNTRIES.map(([iso, name, dial]) => el('option', { value: iso, selected: iso === guess }, `${name} (+${dial})`)),
+  ]);
+  const input = el('input', {
+    type: 'tel', id: 'auth-phone', name: 'auth-phone', autocomplete: 'tel-national',
+    inputmode: 'tel', placeholder: 'e.g. 712 345 678',
+  });
+
+  const value = () => {
+    const raw = input.value.trim().replace(/[\s().-]/g, '');
+    if (!raw) return {};
+    if (!/^\+?\d+$/.test(raw)) return { error: 'Phone number can only contain digits.' };
+    let number;
+    if (raw.startsWith('+')) {
+      number = raw; // already international, so the picker is not needed
+    } else {
+      const entry = COUNTRIES.find(([iso]) => iso === country.value);
+      if (!entry) return { error: 'Choose the country code for your phone number.' };
+      number = `+${entry[2]}${raw.replace(/^0+/, '')}`;
+    }
+    const digits = number.length - 1;
+    if (digits < 7 || digits > 15) return { error: 'That phone number looks too short or too long.' };
+    return { number };
+  };
+
+  const wrap = el('div', { class: 'field' }, [
+    el('label', { for: 'auth-phone' }, ['Phone number ', el('span', { class: 'muted' }, '(optional)')]),
+    el('div', { class: 'phone-row' }, [country, input]),
+  ]);
+  return { wrap, value };
+}
+
+/**
+ * A "Log out" button for an app's top bar. Signing out returns to the sign-in
+ * screen; the budget stays saved on this device and in the account.
+ * @param {object} opts
+ * @param {Function} opts.rerender redraw the host app after signing out
+ */
+export function logoutButton({ rerender }) {
+  return el('button', {
+    class: 'btn btn-ghost btn-sm', type: 'button',
+    onclick: async (e) => {
+      e.currentTarget.disabled = true;
+      await signOut();
+      toastOk('Logged out.');
+      rerender();
+    },
+  }, 'Log out');
 }

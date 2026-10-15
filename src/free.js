@@ -14,7 +14,7 @@ import { CAT_MAP } from './data/categories.js';
 import { toastOk, toastError } from './ui/toast.js';
 import { consumeOAuthRedirect, isSignedIn, needsNewPassword } from './core/supabase.js';
 import { createSync } from './core/sync.js';
-import { accountPanel, authGate, newPasswordGate } from './ui/auth.js';
+import { accountPanel, authGate, newPasswordGate, logoutButton } from './ui/auth.js';
 
 const KEY = 'acebudget.free.v1';
 const FULL_APP_KEY = 'acebudget.state.v1'; // read only, for currency and theme defaults
@@ -443,7 +443,7 @@ function render() {
       el('strong', {}, 'AceBudget'),
       el('span', { class: 'pill pill-ok' }, 'Free'),
     ]),
-    el('div', { class: 'row free-topbar-actions' }, [currency]),
+    el('div', { class: 'row free-topbar-actions' }, [currency, logoutButton({ rerender: render })]),
   ]);
 
   const nav = el('nav', { class: 'app-nav', 'aria-label': 'Sections' }, [

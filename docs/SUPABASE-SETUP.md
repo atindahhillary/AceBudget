@@ -17,12 +17,19 @@ limits are project-wide, so the choices below apply to amora's sign-up too.
 The tables are recorded in [`supabase/schema.sql`](../supabase/schema.sql):
 
 - **Tables:**
-  - `acebudget_profiles` (one row per user, holds `plan`: `free` or `full`)
+  - `acebudget_profiles` (one row per user: `email`, `full_name`, `phone`, and
+    `plan`: `free` or `full`)
   - `acebudget_states` (one row per user per app: `full` and `free` are separate)
 - **Row level security:** a signed-in user can only read and write their own
   rows. An anonymous caller holding the public key reads nothing.
 - **Signup trigger:** `acebudget_handle_new_user` creates the profile row for
   every new account. `EXECUTE` is revoked so it is not callable over the REST API.
+- **Name, phone and email on the profile**
+  ([`supabase/profile-details.sql`](../supabase/profile-details.sql)): the
+  sign-up form sends the full name and an optional phone number (international
+  form, e.g. `+254712345678`) with the new account. A trigger copies them onto
+  the profile, takes the email from the account itself, and updates the profile
+  if the account email changes, so the two always match.
 
 The client is `src/core/supabase.js`, which talks to the REST endpoints with
 `fetch`: no npm package and no CDN script. Its publishable key is meant to be
@@ -73,6 +80,10 @@ public; row level security does the protecting.
    `welcome-email`, table `acebudget_profiles`, event **Insert**, type
    **Supabase Edge Functions**, function `welcome-email`, timeout 5000 ms, and
    add an HTTP header `x-webhook-secret` with the same value as `WEBHOOK_SECRET`.
+   If creating it fails with error `3F000`, install the Database Webhooks
+   integration first (Integrations > Database Webhooks > Install integration).
+7. **Store name and phone on the profile.** SQL Editor > New query, paste all
+   of `supabase/profile-details.sql`, Run.
 
 ## Turn on Google sign-in (optional)
 

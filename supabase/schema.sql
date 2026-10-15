@@ -4,7 +4,8 @@
 -- These tables already exist in the shared amora project. This file records
 -- them so they can be recreated in a fresh project if AceBudget ever moves:
 -- paste it into Supabase > SQL Editor and press Run. It is safe to run more
--- than once. See docs/SUPABASE-SETUP.md for the rest of the setup.
+-- than once. Then run profile-details.sql, which adds each user's full name
+-- and phone. See docs/SUPABASE-SETUP.md for the rest of the setup.
 -- ============================================================================
 
 -- --- tables ------------------------------------------------------------------

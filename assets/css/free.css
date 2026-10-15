@@ -10,6 +10,8 @@
 
 .free-topbar-actions { gap: var(--sp-2); }
 .free-topbar-actions select { width: auto; padding-block: 6px; font-size: var(--fs-sm); }
+/* On the narrowest phones the "Free" badge steps aside so Log out still fits. */
+@media (max-width: 420px) { .app-topbar > .row:first-child .pill { display: none; } }
 
 .summary-grid { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
 .summary-stat .num { font-size: var(--fs-xl); font-weight: 700; color: var(--ink); }

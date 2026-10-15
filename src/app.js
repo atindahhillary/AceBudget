@@ -29,7 +29,7 @@ import { el, sparkline, barRow, fmtDelta, runwayGauge, interactiveLineChart, int
 import { toastOk, toastWarn, toastError } from './ui/toast.js';
 import { consumeOAuthRedirect, isSignedIn, needsNewPassword } from './core/supabase.js';
 import { createSync } from './core/sync.js';
-import { accountPanel, authGate, newPasswordGate } from './ui/auth.js';
+import { accountPanel, authGate, newPasswordGate, logoutButton } from './ui/auth.js';
 import { passwordInput } from './ui/password.js';
 
 // --- module state ------------------------------------------------------
@@ -150,10 +150,11 @@ function buildShell(state) {
     el('div', { class: 'row' }, [
       el('span', { class: 'brand-mark', 'aria-hidden': 'true' }, '🌱'),
       el('strong', {}, 'AceBudget'),
-      state.profile.household ? el('span', { class: 'muted' }, `· ${state.profile.household}`) : null,
+      state.profile.household ? el('span', { class: 'muted topbar-household' }, `· ${state.profile.household}`) : null,
     ]),
     el('div', { class: 'row' }, [
       el('span', { class: `pill ${runwayPillClass(snap.runway.band)}` }, `${snap.runway.days} safe days`),
+      logoutButton({ rerender: render }),
     ]),
   ]);
 
@@ -222,6 +223,7 @@ function buildOnboarding(state) {
     nameField.wrap, currencyField.wrap, incomeTypeField.wrap, dependantsField.wrap,
     errBox,
     el('button', { class: 'btn btn-primary btn-block btn-lg', type: 'submit' }, 'Start budgeting'),
+    el('div', { class: 'center' }, [logoutButton({ rerender: render })]),
   ]);
 
   return screenShell(form, { banner: true });
