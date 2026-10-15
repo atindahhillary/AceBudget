@@ -5,46 +5,78 @@ account at all, and while signed out they make no network calls. Signing in is
 optional and only adds a cloud backup so a household can open its budget on
 another device.
 
-## What is already done
+## The Supabase project
 
-- **Project:** the `amora` Supabase project (`tyaergniqnrntaubpgiz`, eu-central-1).
-  AceBudget shares it rather than taking a second free-tier slot. Its tables are
-  prefixed `acebudget_` and isolated by row level security.
+AceBudget shares the `amora` Supabase project (`tyaergniqnrntaubpgiz`,
+eu-central-1) rather than taking a second free-tier slot. Its tables are
+prefixed `acebudget_` and isolated by row level security.
+
+**Shared settings:** email confirmation, the SMTP sender and the email rate
+limits are project-wide, so the choices below apply to amora's sign-up too.
+
+The tables are recorded in [`supabase/schema.sql`](../supabase/schema.sql):
+
 - **Tables:**
   - `acebudget_profiles` (one row per user, holds `plan`: `free` or `full`)
   - `acebudget_states` (one row per user per app: `full` and `free` are separate)
-- **Row level security:** every policy is `auth.uid() = user_id`. A signed-in
-  user can only read and write their own rows. Verified: an anonymous caller
-  holding the public key reads zero rows.
-- **Signup trigger:** `acebudget_handle_new_user` creates the profile row
-  automatically. `EXECUTE` is revoked so it is not callable over the REST API.
-- **Client:** `src/core/supabase.js` talks to the REST endpoints with `fetch`.
-  No npm package and no CDN script, matching the project's zero-dependency rule.
+- **Row level security:** a signed-in user can only read and write their own
+  rows. An anonymous caller holding the public key reads nothing.
+- **Signup trigger:** `acebudget_handle_new_user` creates the profile row for
+  every new account. `EXECUTE` is revoked so it is not callable over the REST API.
 
-The publishable key in `src/core/supabase.js` is meant to be public. It grants
-nothing on its own, because row level security does the actual protecting.
+The client is `src/core/supabase.js`, which talks to the REST endpoints with
+`fetch`: no npm package and no CDN script. Its publishable key is meant to be
+public; row level security does the protecting.
 
-## Still to do (needs your accounts)
+## Sign-up: straight in, then a welcome email
 
-### 1. Allow the deployed URLs to redirect back
+- **Email confirmation is off.** A new account is signed in the moment it is
+  created, so nobody waits on an email to get in. The trade-off: addresses are
+  not verified.
+- Because sign-up sends no confirmation email, it never shows Supabase's
+  "For security purposes, you can only request this after N seconds" message.
+  That throttle now only applies to **Forgot password?**, and its interval is
+  set to the minimum (step 4 below).
+- **A welcome email** with an "Open my budget" button is sent to every new
+  account by the `welcome-email` Edge Function
+  ([`supabase/functions/welcome-email`](../supabase/functions/welcome-email/index.ts)),
+  through Gmail. A database webhook calls it on each new `acebudget_profiles` row.
 
-Supabase only redirects back to addresses on its allow-list. In
-**Authentication > URL Configuration**, set the Site URL and add these redirect
-URLs:
+## Dashboard steps (in the amora project)
 
-```
-https://ace-budget.vercel.app/**
-https://atindahhillary.github.io/AceBudget/**
-http://localhost:5199/**
-```
+1. **Turn off confirmation.** Authentication > Sign In / Providers > Email:
+   switch **Confirm email** off and save.
+2. **Allow the app's addresses.** Authentication > URL Configuration: Site URL
+   `https://ace-budget.vercel.app`, and add these redirect URLs (password reset
+   links and Google sign-in need them):
 
-Email confirmation and password reset links, and Google sign-in, all depend on
-this. Email and password sign-in works without it.
+   ```
+   https://ace-budget.vercel.app/**
+   https://atindahhillary.github.io/AceBudget/**
+   http://localhost:5199/**
+   ```
+3. **Gmail app password.** On the sending Google account: turn on 2-Step
+   Verification, then myaccount.google.com/apppasswords > create one named
+   `AceBudget`. Gmail sends up to about 500 emails a day this way.
+4. **Send auth emails through Gmail too.** Authentication > Emails > SMTP
+   Settings: enable custom SMTP with host `smtp.gmail.com`, port `465`,
+   username = the Gmail address, password = the app password, sender name
+   `AceBudget`. Then set **Minimum interval between emails** to the lowest
+   value it accepts. This lifts the built-in sender's limit of a few emails an
+   hour for password resets.
+5. **Deploy the welcome email.** Edge Functions > Deploy a new function > Via
+   editor, name it `welcome-email`, paste `supabase/functions/welcome-email/index.ts`,
+   turn **off** "Verify JWT" (the function checks its own secret instead), deploy.
+   Then Edge Functions > Secrets, add `GMAIL_USER`, `GMAIL_APP_PASSWORD` and
+   `WEBHOOK_SECRET` (any long random string).
+6. **Call it on every new account.** Database > Webhooks > Create: name
+   `welcome-email`, table `acebudget_profiles`, event **Insert**, type
+   **Supabase Edge Functions**, function `welcome-email`, timeout 5000 ms, and
+   add an HTTP header `x-webhook-secret` with the same value as `WEBHOOK_SECRET`.
 
-### 2. Turn on Google sign-in
+## Turn on Google sign-in (optional)
 
 The button is written and ready but hidden, so nobody meets a broken control.
-To enable it:
 
 1. In the Google Cloud console, create an **OAuth 2.0 Client ID** (type: Web
    application).
@@ -53,25 +85,6 @@ To enable it:
 3. In Supabase, **Authentication > Providers > Google**: enable it and paste the
    Client ID and Client Secret.
 4. In `src/core/supabase.js`, change `GOOGLE_ENABLED` to `true` and redeploy.
-
-### 3. Fix the signup email before launch (blocking)
-
-Signing in is now **required** in both apps, so every single user has to get
-through this step. Two things make that fragile right now:
-
-- Email confirmation is **on**, so a new account must click a link first.
-- Supabase's built-in sender is rate limited to a handful of emails per hour.
-  Testing hit `email rate limit exceeded` after only two signups.
-
-So as it stands, a burst of real signups will fail. Pick one before launch:
-
-- **Connect your own SMTP** under **Authentication > Emails** (recommended, and
-  needed for real volume either way), or
-- **Turn confirmation off** under **Authentication > Providers > Email**, which
-  lets people in immediately at the cost of unverified addresses.
-
-The app handles both: it shows "check your email" when confirmation is on, and
-surfaces the rate-limit message rather than failing silently.
 
 ## How syncing behaves
 

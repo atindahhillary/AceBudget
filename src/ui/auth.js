@@ -175,7 +175,9 @@ function signedOutPanel({ sync, rerender, compact, gate = false }) {
       note.textContent = 'Check your email for a confirmation link, then come back and sign in.';
       return;
     }
-    toastOk('Signed in. Your budget will be backed up to your account.');
+    toastOk(mode === 'up'
+      ? 'Account created. A welcome email with a link to your account is on its way.'
+      : 'Signed in. Your budget will be backed up to your account.');
     rerender();
   } }, [
     el('div', { class: 'form-row' }, [emailF.wrap, passF.wrap]),
