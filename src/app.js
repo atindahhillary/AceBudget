@@ -30,6 +30,7 @@ import { toastOk, toastWarn, toastError } from './ui/toast.js';
 import { consumeOAuthRedirect, isSignedIn } from './core/supabase.js';
 import { createSync } from './core/sync.js';
 import { accountPanel, authGate } from './ui/auth.js';
+import { passwordInput } from './ui/password.js';
 
 // --- module state ------------------------------------------------------
 
@@ -350,7 +351,7 @@ function field({ label, id, type = 'text', value = '', required = false, hint, a
     input,
     wrap: el('div', { class: 'field' }, [
       el('label', { for: id }, label),
-      input,
+      type === 'password' ? passwordInput(input) : input,
       hint ? el('div', { class: 'hint' }, hint) : null,
     ]),
   };

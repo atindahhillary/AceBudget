@@ -7,7 +7,7 @@
  * calls for signed-in users, and those must always go straight to the network.
  */
 
-const CACHE_VERSION = 'acebudget-v2';
+const CACHE_VERSION = 'acebudget-v3';
 
 const APP_SHELL = [
   './',
@@ -27,6 +27,7 @@ const APP_SHELL = [
   './src/core/supabase.js',
   './src/core/sync.js',
   './src/ui/auth.js',
+  './src/ui/password.js',
   './src/data/categories.js',
   './src/engine/analytics.js',
   './src/engine/coach.js',

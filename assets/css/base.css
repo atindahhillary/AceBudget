@@ -234,7 +234,7 @@ h1, h2, h3 { text-wrap: balance; }
 .field .hint { font-size: var(--fs-xs); color: var(--text-mute); }
 
 input[type="text"], input[type="number"], input[type="date"], input[type="month"],
-input[type="search"], input[type="email"], select, textarea {
+input[type="search"], input[type="email"], input[type="password"], select, textarea {
   width: 100%; padding: 10px 12px; border: 1px solid var(--line);
   border-radius: var(--r-md); background: var(--surface); color: var(--text);
   transition: border-color .15s var(--ease), box-shadow .15s var(--ease);
@@ -247,6 +247,45 @@ select {
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5' stroke='%2371857e' stroke-width='1.8' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat; background-position: right 12px center; padding-right: 34px;
+}
+
+/* --- password fields: the show/hide eye (ui/password.js) -----------------
+   Colours come from the theme tokens, so the field, its text and the eye are
+   readable in both light and dark without switching themes. */
+.pw-field { position: relative; display: block; }
+.pw-field input { padding-right: 46px; color-scheme: light; }
+:root[data-theme="dark"] .pw-field input { color-scheme: dark; }
+.pw-field input::placeholder { color: var(--text-soft); opacity: 1; }
+/* The browser's own reveal button (Edge) would show a second, hard to see eye. */
+.pw-field input::-ms-reveal, .pw-field input::-ms-clear { display: none; }
+/* Keep browser autofill readable: it paints its own pale background otherwise. */
+.pw-field input:-webkit-autofill,
+.pw-field input:-webkit-autofill:hover,
+.pw-field input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--text); caret-color: var(--text);
+  box-shadow: 0 0 0 1000px var(--surface) inset;
+  transition: background-color 9999s ease-out 0s;
+}
+.pw-field input:-webkit-autofill:focus { box-shadow: 0 0 0 1000px var(--surface) inset, var(--sh-focus); }
+
+.pw-toggle {
+  position: absolute; top: 50%; right: 4px; transform: translateY(-50%);
+  width: 38px; height: 38px; display: inline-flex; align-items: center; justify-content: center;
+  border-radius: var(--r-sm); color: var(--text-soft);
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color .15s var(--ease), color .15s var(--ease);
+}
+/* Hover only where a pointer can hover, so it never sticks after a tap on a phone. */
+@media (hover: hover) { .pw-toggle:hover { background: var(--surface-3); color: var(--ink); } }
+.pw-toggle:active { background: var(--surface-3); color: var(--ink); }
+.pw-toggle:focus-visible { outline: 2px solid var(--brand-500); outline-offset: 0; }
+.pw-toggle.is-on { color: var(--brand-600); }
+:root[data-theme="dark"] .pw-toggle.is-on { color: var(--brand-300); }
+.pw-toggle svg { display: block; width: 20px; height: 20px; }
+/* Bigger target on touch screens. */
+@media (pointer: coarse) {
+  .pw-field input { padding-right: 52px; }
+  .pw-toggle { width: 44px; height: 44px; right: 1px; }
 }
 
 /* --- tables ------------------------------------------------------------- */

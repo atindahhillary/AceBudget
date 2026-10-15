@@ -6,6 +6,7 @@
  */
 
 import { el } from './render.js';
+import { passwordInput } from './password.js';
 import { toastOk, toastError } from './toast.js';
 import {
   GOOGLE_ENABLED, isSignedIn, currentUser,
@@ -177,5 +178,6 @@ function signedOutPanel({ sync, rerender, compact, gate = false }) {
 
 function field(label, id, type) {
   const input = el('input', { type, id, name: id, autocomplete: type === 'password' ? 'current-password' : 'email' });
-  return { input, wrap: el('div', { class: 'field' }, [el('label', { for: id }, label), input]) };
+  const control = type === 'password' ? passwordInput(input) : input;
+  return { input, wrap: el('div', { class: 'field' }, [el('label', { for: id }, label), control]) };
 }
