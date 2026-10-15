@@ -35,7 +35,7 @@ The client is `src/core/supabase.js`, which talks to the REST endpoints with
 `fetch`: no npm package and no CDN script. Its publishable key is meant to be
 public; row level security does the protecting.
 
-## Sign-up: straight in, then a welcome email
+## Sign-up and sign-in emails
 
 - **Email confirmation is off.** A new account is signed in the moment it is
   created, so nobody waits on an email to get in. The trade-off: addresses are
@@ -44,10 +44,18 @@ public; row level security does the protecting.
   "For security purposes, you can only request this after N seconds" message.
   That throttle now only applies to **Forgot password?**, and its interval is
   set to the minimum (step 4 below).
-- **A welcome email** with an "Open my budget" button is sent to every new
-  account by the `welcome-email` Edge Function
-  ([`supabase/functions/welcome-email`](../supabase/functions/welcome-email/index.ts)),
-  through Gmail. A database webhook calls it on each new `acebudget_profiles` row.
+- **A welcome email** with an "Open my budget" button goes to every new
+  AceBudget account, and **a "new sign-in" email** goes out every time an
+  AceBudget user signs in. Both are sent through Gmail by the `welcome-email`
+  Edge Function ([`supabase/functions/welcome-email`](../supabase/functions/welcome-email/index.ts)).
+- [`supabase/account-emails.sql`](../supabase/account-emails.sql) decides who
+  gets what: it adds one row to `acebudget_emails` per email, and a database
+  webhook on that table calls the function. amora shares the accounts, so only
+  AceBudget users are emailed: accounts made by AceBudget's sign-up form
+  (tagged `app: acebudget`) and older accounts with a saved AceBudget budget.
+  The automatic sign-in that comes with creating an account is skipped.
+- Every sign-in now sends an email, so Gmail's limit of about 500 a day covers
+  sign-ups and sign-ins together.
 
 ## Dashboard steps (in the amora project)
 
@@ -76,14 +84,16 @@ public; row level security does the protecting.
    turn **off** "Verify JWT" (the function checks its own secret instead), deploy.
    Then Edge Functions > Secrets, add `GMAIL_USER`, `GMAIL_APP_PASSWORD` and
    `WEBHOOK_SECRET` (any long random string).
-6. **Call it on every new account.** Database > Webhooks > Create: name
-   `welcome-email`, table `acebudget_profiles`, event **Insert**, type
+6. **Store name and phone on the profile.** SQL Editor > New query, paste all
+   of `supabase/profile-details.sql`, Run.
+7. **Queue the account emails.** SQL Editor > New query, paste all of
+   `supabase/account-emails.sql`, Run.
+8. **Call the function for each email.** Database > Webhooks > Create: name
+   `welcome-email`, table `acebudget_emails`, event **Insert**, type
    **Supabase Edge Functions**, function `welcome-email`, timeout 5000 ms, and
    add an HTTP header `x-webhook-secret` with the same value as `WEBHOOK_SECRET`.
    If creating it fails with error `3F000`, install the Database Webhooks
    integration first (Integrations > Database Webhooks > Install integration).
-7. **Store name and phone on the profile.** SQL Editor > New query, paste all
-   of `supabase/profile-details.sql`, Run.
 
 ## Turn on Google sign-in (optional)
 

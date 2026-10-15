@@ -178,7 +178,9 @@ function signedOutPanel({ sync, rerender, compact, gate = false }) {
       if (fullName.length < 2) { err.textContent = 'Enter your full name.'; return; }
       const phone = phoneF.value();
       if (phone.error) { err.textContent = phone.error; return; }
-      details = { full_name: fullName, ...(phone.number ? { phone: phone.number } : {}) };
+      // `app` marks the account as AceBudget's: amora shares the same accounts,
+      // and only AceBudget users get AceBudget's emails.
+      details = { app: 'acebudget', full_name: fullName, ...(phone.number ? { phone: phone.number } : {}) };
     }
     if (!email) { err.textContent = 'Enter your email.'; return; }
     if (password.length < 6) { err.textContent = 'Password must be at least 6 characters.'; return; }
