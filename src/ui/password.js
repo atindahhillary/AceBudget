@@ -63,7 +63,13 @@ export function passwordInput(input) {
     status.textContent = reveal ? 'Password shown' : 'Password hidden';
     if (refocus) {
       input.focus({ preventScroll: true });
-      try { input.setSelectionRange(start, end); } catch { /* the caret simply lands at the end */ }
+      const keepCaret = () => {
+        try { input.setSelectionRange(start, end); } catch { /* the caret simply lands at the end */ }
+      };
+      keepCaret();
+      // Chrome moves the caret to the start just after the type changes, so
+      // typing would land in front of the password. Put it back once more.
+      setTimeout(() => { if (document.activeElement === input) keepCaret(); }, 0);
     }
     refocus = false;
   });
