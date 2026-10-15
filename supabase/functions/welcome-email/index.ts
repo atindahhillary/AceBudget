@@ -15,13 +15,21 @@
  *   WEBHOOK_SECRET      any long random string; the webhook sends it in x-webhook-secret
  *   APP_URL             optional, defaults to https://ace-budget.vercel.app/
  *   TIME_ZONE           optional, for sign-in times; defaults to Africa/Nairobi
+ *
+ * A call is accepted when its x-webhook-secret matches WEBHOOK_SECRET, or when
+ * it carries this project's service-role key, which Supabase attaches by itself
+ * to webhooks of type "Supabase Edge Functions". Refusals are logged with the
+ * reason (never the values), so a mismatch shows up in the function's Logs.
  */
 
 import nodemailer from 'npm:nodemailer@6.9.16';
 
-const GMAIL_USER = Deno.env.get('GMAIL_USER') ?? '';
-const GMAIL_APP_PASSWORD = Deno.env.get('GMAIL_APP_PASSWORD') ?? '';
-const WEBHOOK_SECRET = Deno.env.get('WEBHOOK_SECRET') ?? '';
+// Pasted values often carry a stray space or line break; Google also shows app
+// passwords in groups of four separated by spaces.
+const GMAIL_USER = (Deno.env.get('GMAIL_USER') ?? '').trim();
+const GMAIL_APP_PASSWORD = (Deno.env.get('GMAIL_APP_PASSWORD') ?? '').replace(/\s+/g, '');
+const WEBHOOK_SECRET = (Deno.env.get('WEBHOOK_SECRET') ?? '').trim();
+const SERVICE_ROLE_KEY = (Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '').trim();
 const APP_URL = Deno.env.get('APP_URL') ?? 'https://ace-budget.vercel.app/';
 const TIME_ZONE = Deno.env.get('TIME_ZONE') ?? 'Africa/Nairobi';
 
@@ -116,9 +124,24 @@ function signInMail(to: string, name: string | null | undefined, at: string) {
   };
 }
 
+/** Is this call from our webhook? Returns null when it is, or why not. */
+function refusal(req: Request): string | null {
+  const given = (req.headers.get('x-webhook-secret') ?? '').trim();
+  if (WEBHOOK_SECRET && given === WEBHOOK_SECRET) return null;
+  const bearer = (req.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '').trim();
+  if (SERVICE_ROLE_KEY && bearer === SERVICE_ROLE_KEY) return null;
+  return [
+    given ? `x-webhook-secret sent (${given.length} characters)` : 'x-webhook-secret header missing',
+    WEBHOOK_SECRET ? `WEBHOOK_SECRET is ${WEBHOOK_SECRET.length} characters` : 'WEBHOOK_SECRET not set',
+    bearer ? 'authorization sent but is not the service-role key' : 'no authorization header',
+  ].join('; ');
+}
+
 Deno.serve(async (req) => {
   if (req.method !== 'POST') return new Response('Method not allowed', { status: 405 });
-  if (!WEBHOOK_SECRET || req.headers.get('x-webhook-secret') !== WEBHOOK_SECRET) {
+  const why = refusal(req);
+  if (why) {
+    console.warn(`refused: ${why}`);
     return new Response('Unauthorized', { status: 401 });
   }
 
